@@ -99,7 +99,7 @@ $\text{x}$ is just a coefficient used to scale how fast/slow the win expectancy 
 
 Finally, here is what the full formula looks like:
 
-$$\text{R}_n=\text{R}_\text{o}+\text{K}\times\left(\text{W}-\frac{1}{10^{-\frac{\text{RDiff}+(\text{R}_\text{o}\times0.1)}{x}}+1}\right)$$
+$$\text{R}_n= \text{R}_o +\text{K}\times\left(\text{W}-\frac{1}{10^{-\frac{\text{RDiff}+(\text{R}_o\times0.1)}{x}}+1}\right)$$
 
 Added a new branch, testing, for exactly that, testing. Added a win expectancy calculator based on what I currently have formulated. Hopefully I stick to this branch when testing.
 
