@@ -15,6 +15,8 @@ The following is my little diary containing thoughts and processes during develo
 
 ## 5/11/22
 
+### Formula Explanation
+
 Trying to come up with a modified version of the Elo ranking system based on the NRL and Football power rankings.
 
 Starting from here:
@@ -32,7 +34,7 @@ $\text{W}_e =$ Expected Result
 
 To further clarify some of the independant variables.
 
-###### $\text{K}$
+#### K
 
 There two factors to take into consideration for calculating $\text{K}$:
 - What type of game is it? (Finals/Conference Finals/Regular Season etc.)
@@ -49,11 +51,15 @@ I've come up with these constants for what game is being played. For games being
 | Play In | 24 |
 | Regular Season | 20 |
 
-As for score difference, deciding to have it not affect $\text{K}$ as of now. Just to make starting easier. I do wonder how I will decide this. The Grizzlies just beat the Thunder by 73 points last season (21-22) for an NBA record. Going on a little tangent, taking this game by itself, and you might think that the Grizzlies might be the best NBA team. It's somewhat true because they did finish in 2nd in the Western Conference and also with the second best record across the NBA, but they fell to the eventual champs in the second round of the playoffs, 4-2. There are so many factors to why a team would get blown out like this. Interesting thing is that the Grizzlies were playing without Ja Morant, their "Superstar" that year. The Grizzlies went 20-5 without and 36-21 with Ja. Even advanced statistics supported this. With Ja, their [OFFRTG was 114.5](https://www.statmuse.com/nba/ask?q=grizzlies+offensive+rating+with+ja+morant+2021-22)([#10*](https://www.statmuse.com/nba/ask?q=team+offensive+rating+2021-2)) and their [DEFRTG was 112.3](https://www.statmuse.com/nba/ask?q=grizzlies+offensive+rating+with+ja+morant+2021-22)([T#15](https://www.statmuse.com/nba/ask?q=team+defensive+rating+2021-22)) for a NETRTG of 2.2+([T#12](https://www.statmuse.com/nba/ask?q=team+net+rating+2021-22)). Without Ja, thier [OFFRTG was 117.6](https://www.statmuse.com/nba/ask?q=grizzlies+offensive+rating+without+ja+morant+2021-22)([#1](https://www.statmuse.com/nba/ask?q=teams+net+rating+2021-22)) and thier [DEFRTG was 104](https://www.statmuse.com/nba/ask?q=grizzlies+defensive+rating+without+ja+morant+2021-22)([#1](https://www.statmuse.com/nba/ask?q=teams+net+rating+2021-22)) for a NETRTG of 13.6+([#1](https://www.statmuse.com/nba/ask?q=teams+net+rating+2021-22)).
+As for score difference, deciding to have it not affect $\text{K}$ as of now. Just to make starting easier. I do wonder how I will decide this. The Grizzlies just beat the Thunder by 73 points last season (21-22) for an NBA record. 
 
-* - I'm taking the ratings and comparing them to the other 29 teams in the NBA. Obviously, comparing a smaller sample size to the rest of the NBA doesn't make these statements true. But, it does paint an intreseting picture.
+Going on a little tangent, taking this game by itself, and you might think that the Grizzlies might be the best NBA team. It's somewhat true because they did finish in 2nd in the Western Conference and also with the second best record across the NBA, but they fell to the eventual champs in the second round of the playoffs, 4-2. There are so many factors to why a team would get blown out like this. Interesting thing is that the Grizzlies were playing without Ja Morant, their "Superstar" that year. The Grizzlies went [20-5](https://www.statmuse.com/nba/ask?q=grizzlies+record+without+ja+morant+2021-22) without and [36-21](https://www.statmuse.com/nba/ask?q=grizzlies+record+with+ja+morant+2021-22) with Ja. Even advanced statistics supported this. With Ja, their [OFFRTG was 114.5](https://www.statmuse.com/nba/ask?q=grizzlies+offensive+rating+with+ja+morant+2021-22)([#10](https://www.statmuse.com/nba/ask?q=team+offensive+rating+2021-2)*) and their [DEFRTG was 112.3](https://www.statmuse.com/nba/ask?q=grizzlies+offensive+rating+with+ja+morant+2021-22)([T#15](https://www.statmuse.com/nba/ask?q=team+defensive+rating+2021-22)) for a NETRTG of 2.2+([T#12](https://www.statmuse.com/nba/ask?q=team+net+rating+2021-22)). Without Ja, thier [OFFRTG was 117.6](https://www.statmuse.com/nba/ask?q=grizzlies+offensive+rating+without+ja+morant+2021-22)([#1](https://www.statmuse.com/nba/ask?q=teams+net+rating+2021-22)) and thier [DEFRTG was 104](https://www.statmuse.com/nba/ask?q=grizzlies+defensive+rating+without+ja+morant+2021-22)([#1](https://www.statmuse.com/nba/ask?q=teams+net+rating+2021-22)) for a NETRTG of 13.6+([#1](https://www.statmuse.com/nba/ask?q=teams+net+rating+2021-22)). This trend also continues into the playoffs. With Ja, their [OFFRTG was 111.7](https://www.statmuse.com/nba/ask?q=grizzlies+net+rating+with+ja+morant+2021-22+playoffs)([#8](https://www.statmuse.com/nba/ask?q=teams+net+rating+2021-22+playoffs)) and their [DEFRTG was 110.9](https://www.statmuse.com/nba/ask?q=grizzlies+net+rating+with+ja+morant+2021-22+playoffs)([#5](https://www.statmuse.com/nba/ask?q=teams+net+rating+2021-22+playoffs)) for a NETRTG of 0.8+([T#5](https://www.statmuse.com/nba/ask?q=teams+net+rating+2021-22+playoffs)). Without Ja, their [OFFRTG was 108.7](https://www.statmuse.com/nba/ask?q=grizzlies+net+rating+without+ja+morant+2021-22+playoffs)([#12](https://www.statmuse.com/nba/ask?q=teams+net+rating+2021-22+playoffs)) and their [DEFRTG was 101.4](https://www.statmuse.com/nba/ask?q=grizzlies+net+rating+without+ja+morant+2021-22+playoffs)([#1](https://www.statmuse.com/nba/ask?q=teams+net+rating+2021-22+playoffs)) for a NETRTG of 7.3+([#1](https://www.statmuse.com/nba/ask?q=teams+net+rating+2021-22+playoffs)).
 
-###### $\text{W}$
+\* I'm taking the ratings and comparing them to the other 29 teams in the NBA. Obviously, comparing a smaller sample size to the rest of the NBA doesn't make these statements true. But, it does paint an intreseting picture. This also applies to the rest of the comparisons, doubly so for the playoffs since there are much fewer games.
+
+Not sure why I went on a Memphis rant - IYKYK. Now, returning to my original point, I think that a team beating seven opponents in a row by a point differential of 10 is more impressive than winning by 70 for a single game. I think that consistancy means more for how good a team is rather than these anomalies. Not sure yet to how I could reward teams with a high point differential but it's something to think about in the future. Also, I should probably add a cap to the point of how much the point differential will affect $\text{K}$. Thinking of something around 20.
+
+#### W
 
 I tried to have $\text{W}$ set according to the following table:
 
@@ -94,7 +100,7 @@ Could always multiply $\text{W}$ by a constant to accerlate even further.
 
 
 
-###### $\text{W}_e$
+#### W<sub>e
 
 $\text{W}_e$ is calculated using this formula:
 
@@ -109,4 +115,5 @@ Finally, here is what the full formula looks like:
 $$\text{R}_n=\text{R}_\text{o}+\text{K}\times(\text{W}-\frac{1}{10^{-\frac{\text{RDiff}+(\text{R}_\text{o}\times0.1)}{x}}+1})$$
 
 Next, is figuring out what programming language to use. It'll be easier for me to tweak and test the formula once it's been coded than using pen and paper to check.
+
 
