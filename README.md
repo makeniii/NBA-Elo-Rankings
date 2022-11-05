@@ -3,9 +3,15 @@
 Creating my own NBA power rankings system taking inspiration from an [NRL](https://fanalytics.weebly.com/) and [Football](http://www.eloratings.net/) power ranking system. My own and both of these systems are based on Arpad Elo's Elo ranking system used to rate chess players.
 
 The Elo ranking system is based on the following formula:
-> **Rn = Ro + K × (W - We)**
 
-The following is my little diary containing thoughts and processes during development.
+**Rn = Ro + K × (W - We)**
+
+The following is my little diary containing thoughts and processes during development. Some terms to be aware of:
+|Term|Meaning|
+|---|---|
+|PR|Power Ranking|
+|OT|Over Time|
+
 
 ## 5/11/22
 
@@ -72,7 +78,11 @@ $$\frac{1}{10^{-\frac{\text{RDiff}+\text{HomeAdv}}{x}}+1}$$
 
 Where $\text{RDiff}$ is the difference in PR. The expected result is always $\geq 0 \text{ and} \leq 1$. This is because even though there is a 100+/- difference in PR, a team is **never** guaranteed a win/loss.
 
-$\text{HomeAdv}$ is a constant. After reading a [post](https://bleacherreport.com/articles/1520496-how-important-is-home-court-advantage-in-the-nba#:~:text=Of%20the%20four%20major%20American,games%20in%20their%20home%20arenas.), I've decided to make homecourt advantage worth 10%. The article mentions that there is a discrepency between the regular season and playoffs homecourt advantages. ~61% of home teams in the regular season win, while ~65% of home playoff teams win. The article does say that teams that home teams in the playoffs are always the higher seed so there is that to take into consideration. So, that's why I decided to make home teams 10% better, thus making $\text{HomeAdv}=Rn\times0.1$
+$\text{HomeAdv}$ is a constant. After reading a [post](https://bleacherreport.com/articles/1520496-how-important-is-home-court-advantage-in-the-nba#:~:text=Of%20the%20four%20major%20American,games%20in%20their%20home%20arenas.), I've decided to make home court advantage worth 10%. The article mentions that there is a discrepency between the regular season and playoffs home court advantages. ~61% of home teams in the regular season win, while ~65% of home playoff teams win. The article does say that teams that home teams in the playoffs are always the higher seed so there is that to take into consideration. So, that's why I decided to make home teams 10% better, thus making $\text{HomeAdv}=\text{R}_o\times0.1$. Although, this does introduce the fact that higher PR teams will gain more from home court. However, it does make sense to me that better teams gain more from home court.
 
+Finally, here is what the full formula looks like:
 
+$$\text{R}_n=\text{R}_o+\text{K}\times(\text{W}-\frac{1}{10^{-\frac{\text{RDiff}+(\text{R}_o\times0.1)}{x}}+1})$$
+
+Next, is figuring out what programming language to use. It'll be easier for me to tweak and test the formula once it's been coded than using pen and paper to check.
 
