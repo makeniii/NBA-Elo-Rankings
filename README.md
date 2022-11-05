@@ -110,9 +110,13 @@ Where $\text{RDiff}$ is the difference in PR. The expected result is always $\ge
 
 $\text{HomeAdv}$ is a constant. After reading a [post](https://bleacherreport.com/articles/1520496-how-important-is-home-court-advantage-in-the-nba#:~:text=Of%20the%20four%20major%20American,games%20in%20their%20home%20arenas.), I've decided to make home court advantage worth 10%. The article mentions that there is a discrepency between the regular season and playoffs home court advantages. ~61% of home teams in the regular season win, while ~65% of home playoff teams win. The article does say that teams that home teams in the playoffs are always the higher seed so there is that to take into consideration. So, that's why I decided to make home teams 10% better, thus making $\text{HomeAdv}=\text{R}_\text{o}\times0.1$. Although, this does introduce the fact that higher PR teams will gain more from home court. However, it does make sense to me that better teams gain more from home court.
 
+$\text{x}$ is just a coefficient used to scale how fast/slow the win expectancy changes. I've set it currently to 50. Will probably change in the future.
+
 Finally, here is what the full formula looks like:
 
 $$\text{R}_n=\text{R}_\text{o}+\text{K}\times(\text{W}-\frac{1}{10^{-\frac{\text{RDiff}+(\text{R}_\text{o}\times0.1)}{x}}+1})$$
+
+Added a new branch, testing, for exactly that, testing. Added a win expectancy calculator based on what I currently have formulated. Hopefully I stick to this branch when testing.
 
 Next, is figuring out what programming language to use. It'll be easier for me to tweak and test the formula once it's been coded than using pen and paper to check.
 
