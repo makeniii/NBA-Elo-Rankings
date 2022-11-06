@@ -133,8 +133,8 @@ I spent a long time thinking about how I'm going to approach my solution. At fir
 
 After a bit, I finally have my starting class diagram:
   
-![possible future class diagram 6_11_22 drawio (1)](https://user-images.githubusercontent.com/117491084/200154248-8a2bcf1e-e941-416f-b48d-65d862e6244c.png)
+![draft class diagram](https://user-images.githubusercontent.com/117491084/200154248-8a2bcf1e-e941-416f-b48d-65d862e6244c.png)
 
-Notation is probably wrong but to me, it looks like a decent class diagram that anyone - with class diagram knowledge - would understand. There'll for sure be many edits to the diagram to come, and yes, I've already made one.
+Notation is probably wrong but to me, it looks like a decent class diagram that anyone - with class diagram knowledge - would understand. There'll for sure be many edits to the diagram to come, and yes, I've already made one. Will probably also add more detail too, like adding input variables.
   
 Something I also need to do is cut some of the formula information from here and add it to the readme file.
