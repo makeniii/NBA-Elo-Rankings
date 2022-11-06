@@ -133,7 +133,6 @@ I spent a long time thinking about how I'm going to approach my solution. At fir
 
 After a bit, I finally have my starting class diagram:
   
-![Starting class diagram](https://user-images.githubusercontent.com/117491084/200153462-14a4f293-237b-4877-8ce8-ac5b7c048f02.png)
-
+![possible future class diagram 6_11_22 drawio (1)](https://user-images.githubusercontent.com/117491084/200154053-8c19db08-370e-4998-b812-76fb361bede6.png)
 
 Notation is probably wrong but to me, it looks like a decent class diagram that anyone - with class diagram knowledge - would understand. There'll for sure be many edits to the diagram to come, and yes, I've already made one.
