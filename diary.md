@@ -129,6 +129,9 @@ After adding my 2 milestones, I've thought about how I want to organise the new 
 
 That means, that my testing branch is now useless since I'll be doing the testing in their own branches.
 
-![Alt text](../../../Downloads/possible%20future%20class%20diagram%206_11_22.drawio.png)
+My starting class diagram:
+  
+![Starting class diagram](https://user-images.githubusercontent.com/117491084/200153462-14a4f293-237b-4877-8ce8-ac5b7c048f02.png)
+
 
 
