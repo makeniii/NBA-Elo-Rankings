@@ -139,4 +139,6 @@ Notation is probably wrong but to me, it looks like a decent class diagram that 
   
 Something I also need to do is cut some of the formula information from here and add it to the readme file.
 
-Created simple-backend branch for milestone 1 and deleted testing branch.
+I spent around 2 hours wasting time because I couldn't get the nba-api to install. First it was showing me an error that was saying that the subprocess was failing and not pip iteself. I tried to diagnose the problem but it ended up no where. So after around 2 hours, I decided to uninstall mingw64 - honestly don't even remember why I installed it, but it was probably for one of my courses - and freshly install python 3.9.13. Oh my days, it finally worked. I made a new venv and activated it and finally installed nba-api. I really wasted that time.
+
+I implemented the game class with a few changes. Will need to update class diagram to reflect those changes. I added an id field to the game class just in case I need to use it in the future. I also implemented some of the functionality of issue 2.1.1. That's without testing though. I also did have to install pandas to use dataFrames.
