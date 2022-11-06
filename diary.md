@@ -97,7 +97,7 @@ $x$ is just a coefficient used to scale how fast/slow the win expectancy changes
 
 Finally, here is what the full formula looks like:
 
-$$\text{R}_n= \text{R}_o +\text{K}\times\left(\text{W}-\frac{1}{10^{-\frac{\text{RDiff}+(\text{R}_o\times0.1)}{x}}+1}\right)$$
+$$\text{R}_n=\text{R}_o+\text{K}\times\left(\text{W}-\frac{1}{10^{-\frac{\text{RDiff}+(\text{R}_o\times0.1)}{x}}+1}\right)$$
 
 Added a new branch, testing, for exactly that, testing. Added a win expectancy calculator based on what I currently have formulated. Hopefully I stick to this branch when testing.
 
@@ -129,9 +129,11 @@ After adding my 2 milestones, I've thought about how I want to organise the new 
 
 That means, that my testing branch is now useless since I'll be doing the testing in their own branches.
 
-My starting class diagram:
+I spent a long time thinking about how I'm going to approach my solution. At first I didn't take into consideration how I'm going to program, whether I'd be using a simple top down approach or something like OOP. I will admit that my OOP knowledge is not the best, but after thinking for a while about how my will hypothetically be, I realised that I will probably end up with classes anyways. So, I'm going to try and also, hopefully, improve my OOP skills. Also, OOP was something I didn't even take in to account when considering what programming language to use. Luckily, I can still use OOP in Python.
+
+After a bit, I finally have my starting class diagram:
   
 ![Starting class diagram](https://user-images.githubusercontent.com/117491084/200153462-14a4f293-237b-4877-8ce8-ac5b7c048f02.png)
 
 
-
+Notation is probably wrong but to me, it looks like a decent class diagram that anyone - with class diagram knowledge - would understand. There'll for sure be many edits to the diagram to come, and yes, I've already made one.
