@@ -83,8 +83,6 @@ $$
 
 Could always multiply $\text{W}$ by a constant to accerlate even further.
 
-
-
 ### W<sub>e
 
 $\text{W}_e$ is calculated using this formula:
@@ -115,7 +113,22 @@ Time: 6:00
 
 # 6/11/22
 
+> Also, figure out what programming language to use.
+
 I've decided that the programming language I'll primarily use is python3.9 (it's what's installed on my pc) with javascript - well probably - for the website side. Created the project in github to keep track of issues and added the first issue which was to decide on a programming language. Completed that obviously. Now, moving on to what milestones I should set for the project. After thinking and writing down some ideas, the first milestone should be the backend with a simple implementation of the formula I currently have. The second milestone would be a simple website that displays the information as a chart. From there I can add more features and complexities to it.
 
 Created 2 milestones and added all(?) tasks for the simple backend milestone. Added tags that show priority from high, medium to low. High being I have to complete the task for the core program to work as intended. Meduium being something I _want_ to complete and low being something I can complete if I feel like it. I'm able to sort what tasks are connected by milestone then by the numbering of the title. So for example, must complete task 1.3 before completing task 1 or task 1.3.5 before task 1.3 and so on.
+
+> I need to figure out the scope of this project.
+
+As for the scope of the project, I feel like this is something I can continueously build upon as I think of more features or improvements to like the aesthetics of the website. So, I guess the scope is as big as I want it to be. Currently have 2 milestones set and will work from there. This does mean that once I complete these first two milestones, every new feature after that will have a medium or low priority. Not sure if that makes sense but it does to me, so, going to roll with it. So, yeah, every feature will be it's own milestone.
+
+After adding my 2 milestones, I've thought about how I want to organise the new code I'll be writing. I've come up with adding a new branch for every milestone. Since every milestone is a feature or just about, I think that having the ability to test, tweak, or fix features without touching the main branch is great because that means I _should_ be able to work on multiple features simultaneously - I hope.
+
+> Added a new branch, testing, for exactly that, testing. Added a win expectancy calculator based on what I currently have formulated. Hopefully I stick to this branch when testing.
+
+That means, that my testing branch is now useless since I'll be doing the testing in their own branches.
+
+
+
 
