@@ -95,7 +95,7 @@ Where $\text{RDiff}$ is the difference in PR. The expected result is always $\ge
 
 $\text{HomeAdv}$ is a constant. After reading a [post](https://bleacherreport.com/articles/1520496-how-important-is-home-court-advantage-in-the-nba#:~:text=Of%20the%20four%20major%20American,games%20in%20their%20home%20arenas.), I've decided to make home court advantage worth 10%. The article mentions that there is a discrepency between the regular season and playoffs home court advantages. ~61% of home teams in the regular season win, while ~65% of home playoff teams win. The article does say that teams that home teams in the playoffs are always the higher seed so there is that to take into consideration. So, that's why I decided to make home teams 10% better, thus making $\text{HomeAdv}=\text{R}_\text{o}\times0.1$. Although, this does introduce the fact that higher PR teams will gain more from home court. However, it does make sense to me that better teams gain more from home court.
 
-$\text{x}$ is just a coefficient used to scale how fast/slow the win expectancy changes. I've set it currently to 50. Will probably change in the future.
+$x$ is just a coefficient used to scale how fast/slow the win expectancy changes. I've set it currently to 50. Will probably change in the future.
 
 Finally, here is what the full formula looks like:
 
@@ -106,3 +106,16 @@ Added a new branch, testing, for exactly that, testing. Added a win expectancy c
 Next, I need to figure out the scope of this project. I have a rough idea that I want a website(local) visually showing me the power rankings. Probably start with a simple text based version before moving to a visual (graph?) representation of the rankings. There are many different features that can be added to this like a predictor for NBA champs, ladder etc.
 
 Also, figure out what programming language to use. It'll be easier for me to tweak and test the formula once it's been coded than using pen and paper to check.
+
+Going to log the time spent on this project.
+
+Time: 6:00
+
+\* All times are an approximation formatted as hh:mm
+
+# 6/11/22
+
+I've decided that the programming language I'll primarily use is python3.9 (it's what's installed on my pc) with javascript - well probably - for the website side. Created the project in github to keep track of issues and added the first issue which was to decide on a programming language. Completed that obviously. Now, moving on to what milestones I should set for the project. After thinking and writing down some ideas, the first milestone should be the backend with a simple implementation of the formula I currently have. The second milestone would be a simple website that displays the information as a chart. From there I can add more features and complexities to it.
+
+Created 2 milestones and added all(?) tasks for the simple backend milestone.
+
