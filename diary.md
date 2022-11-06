@@ -129,6 +129,6 @@ After adding my 2 milestones, I've thought about how I want to organise the new 
 
 That means, that my testing branch is now useless since I'll be doing the testing in their own branches.
 
-
+![Alt text](../../../Downloads/possible%20future%20class%20diagram%206_11_22.drawio.png)
 
 
