@@ -137,5 +137,3 @@ After a bit, I finally have my starting class diagram:
 
 
 Notation is probably wrong but to me, it looks like a decent class diagram that anyone - with class diagram knowledge - would understand. There'll for sure be many edits to the diagram to come, and yes, I've already made one.
-
-Something I also need to do is cut some of the formula information from here and add it to the readme file.
