@@ -146,3 +146,5 @@ I implemented the game class with a few changes. Will need to update class diagr
 # 7/11/21
 
 Continuing where I left off, yesterday I was able to get all NBA games for the 2021-22 season that includes; home, away, pts for both teams, and date. With this, I can complete all but the game type entry.
+  
+Well I ran into a small problem, none of the functions in the nba-api returns data on playoff series
