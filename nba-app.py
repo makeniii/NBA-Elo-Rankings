@@ -9,6 +9,9 @@ import datetime
 import math
 import time
 
+'''
+A few helper functions just to shorten the length of code to make it easier to read
+'''
 def get_games(season, type) -> pd.DataFrame:
     return leaguegamelog.LeagueGameLog(season=season, season_type_all_star=type).get_data_frames()[0]
 
@@ -56,9 +59,8 @@ class Game():
         return abs(self.score['home'] - self.score['away'])
 
 class Schedule():
-    games = []
-    
     def __init__(self) -> None:
+        self.games = []
         pass
 
     def add_games(self, games):
@@ -74,13 +76,21 @@ class TeamSchedule(Schedule):
     def add_games(self, games):
         return super().add_games(games)
 
-class Team():
-    pr = -1
-    schedule = TeamSchedule()
+class PR():
+    def __init__(self) -> None:
+        self.x = 100
+        self.home_adv = 0.1
+        self.pr = -1
 
+    def win_expectancy_calc(self, Ro, OPPRo, is_home) -> int:
+        return 1 / (10**(-((Ro - OPPRo) + Ro*(is_home*self.home_adv)) / self.x) + 1)
+
+
+class Team():
     def __init__(self, name) -> None:
         self.name = name
-        self.pr = -1
+        self.pr = PR()
+        self.schedule = TeamSchedule()
 
     def __repr__(self) -> str:
         return self.name
@@ -185,14 +195,32 @@ class Team():
         
         self.schedule.add_games(games)
 
-team_list = []
+# team_list = []
 
-time_now = time.time()
-for team in teams.teams:
-    x = Team(team[1])
-    x.create_schedule()
-    team_list.append(x)
+# time_now = time.time()
+# for team in teams.teams:
+#     x = Team(team[1])
+#     x.create_schedule()
+#     team_list.append(x)
 
-print(time.time() - time_now)
-print(team_list)
-print(len(team_list))
+# print(time.time() - time_now)
+# print(team_list)
+# print(len(team_list))
+
+team = Team('GSW')
+
+playoff_games_hist = get_games(2021, 'Playoffs')
+playoff_games_hist = playoff_games_hist[playoff_games_hist['TEAM_ABBREVIATION'] == 'GSW']
+sorted_playoff_games_hist = playoff_games_hist.sort_values(by=['GAME_ID'])
+sorted_playoff_games_hist = sorted_playoff_games_hist.reset_index(drop=True).get(['GAME_DATE', 'MATCHUP', 'GAME_ID', 'TEAM_ID'])
+# print(sorted_playoff_games_hist)
+
+all_series = commonplayoffseries.CommonPlayoffSeries(season=2021).get_data_frames()[0]
+
+playoff_games_hist['SERIES_ID'] = all_series['SERIES_ID']
+
+for playoff_game in all_series.to_dict('records'):
+    
+    if int(playoff_game['SERIES_ID']) // 10**1 % 10 == 1:
+        print('is first round game')
+        print(playoff_game['SERIES_ID'])
