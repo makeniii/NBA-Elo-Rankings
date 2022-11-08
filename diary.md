@@ -142,3 +142,19 @@ Something I also need to do is cut some of the formula information from here and
 I spent around 2 hours wasting time because I couldn't get the nba-api to install. First it was showing me an error that was saying that the subprocess was failing and not pip iteself. I tried to diagnose the problem but it ended up no where. So after around 2 hours, I decided to uninstall mingw64 - honestly don't even remember why I installed it, but it was probably for one of my courses - and freshly install python 3.9.13. Oh my days, it finally worked. I made a new venv and activated it and finally installed nba-api. I really wasted that time.
 
 I implemented the game class with a few changes. Will need to update class diagram to reflect those changes. I added an id field to the game class just in case I need to use it in the future. I also implemented some of the functionality of issue 2.1.1. That's without testing though. I also did have to install pandas to use dataFrames.
+  
+# 7/11/21
+
+Continuing where I left off, yesterday I was able to get all NBA games for the 2021-22 season that includes; home, away, pts for both teams, and date. With this, I can complete all but the game type entry.
+  
+Well I ran into a small problem, none of the functions in the nba-api returns data on playoff series
+
+# 8/11/21
+
+Fell asleep at the computer yesterday. So, I had a little problem where I couldn't dynamically get the season based on the current date. I finally solved that. Now I'm able to create a schedule up to the teams last played game, which includes the previous season too.
+
+I added a TeamSchedule subclass of Schedule becuase I realised that team schedules and season schedules would be different. Team schedules will include things like whether they won or not whereas season schedules will just include game data not specific to a team. So, I finally compeleted 2.1.1 but without any extensive testing. Just based on print statements, it appears to be correct. Now I can create a schedule for every team in the nba up til their last played game, including the previous season. Will need to do the same for when I implement the Season class. But that will be much easier since I will just be creating games and not having to manipulate data. It will be similar to Team.create_schedule anyways.
+  
+Welp, the nba server thinks I'm a bot and has at least suspended my ip. I can't recieve any data for the time being. I guess looping through all nba teams and creating the schedules was too much for the server. Hopefully it works fine later today or tomorrow.
+
+Actually, I fixed the problem by adding a 2 second sleep - someone had the same problem - after each call to the api. Creating the schedules for every team would mean that 2 minutes of execution would be added which isn't great. I added a simple time calculator to see how long it would take and it took 4 minutes and 14 seconds just create the schedules. I lowered the sleep time to 1 second and that reduced the time to 2 minutes and 14 seconds. So, while 2.1.1 is complete - again not tested - the time it takes to execute is high I think. I think a better solution would just have a total of 4 requests to get the data which would be the season logs and store it somewhere for the program to access. For now I think it would be easier to just store it in a variable in the program at the moment.
