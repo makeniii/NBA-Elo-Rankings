@@ -148,3 +148,11 @@ I implemented the game class with a few changes. Will need to update class diagr
 Continuing where I left off, yesterday I was able to get all NBA games for the 2021-22 season that includes; home, away, pts for both teams, and date. With this, I can complete all but the game type entry.
   
 Well I ran into a small problem, none of the functions in the nba-api returns data on playoff series
+
+# 8/11/21
+
+Fell asleep at the computer yesterday. So, I had a little problem where I couldn't dynamically get the season based on the current date. I finally solved that. Now I'm able to create a schedule up to the teams last played game, which includes the previous season too.
+
+I added a TeamSchedule subclass of Schedule becuase I realised that team schedules and season schedules would be different. Team schedules will include things like whether they won or not whereas season schedules will just include game data not specific to a team. So, I finally compeleted 2.1.1 but without any extensive testing. Just based on print statements, it appears to be correct. Now I can create a schedule for every team in the nba up til their last played game, including the previous season. Will need to do the same for when I implement the Season class. But that will be much easier since I will just be creating games and not having to manipulate data. It will be similar to Team.create_schedule anyways.
+  
+Welp, the nba server thinks I'm a bot and has at least suspended my ip. I can't recieve any data for the time being. I guess looping through all nba teams and creating the schedules was too much for the server. Hopefully it works fine later today or tomorrow.
