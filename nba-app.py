@@ -19,44 +19,22 @@ def get_games_default(type) -> pd.DataFrame:
     return leaguegamelog.LeagueGameLog(season_type_all_star=type).get_data_frames()[0]
 
 class Game():
-    home_team = ''
-    away_team = ''
-    score = {'home': -1, 'away': -1}        # {'home': PTS, 'away': PTS}
-    date = ''                               # yyyy-mm-dd
-
-    def __init__(self, id, home_team, home_pts, away_team, away_pts, date, type):
+    def __init__(self, id, home_team, home_pts, away_team, away_pts, date):
         self.id = id
-        self.set_home_team(home_team)
-        self.set_away_team(away_team)
-        self.set_score(home_pts, away_pts)
-        self.set_date(date)
-        self.set_type(type)
+        self.home_team = home_team
+        self.away_team = away_team
+        self.score = {'HOME': home_pts, 'AWAY': away_pts}
+        self.date = date
 
     def __str__(self) -> str:
-        return 'id: ' + str(self.id) + ', home_team: ' + self.home_team + ', away_team: ' + self.away_team + ', score: ' + str(self.score) + ', ' + self.date + ', ' + self.type
+        return 'id: ' + str(self.id) + ', home_team: ' + self.home_team + ', away_team: ' + self.away_team + ', score: ' + str(self.score) + ', ' + self.date
     
     # do I need both?
     def __repr__(self) -> str:
-        return 'id: ' + str(self.id) + ', home_team: ' + self.home_team + ', away_team: ' + self.away_team + ', score: ' + str(self.score) + ', ' + self.date + ', ' + self.type
-
-    def set_score(self, home, away):
-        self.score['home'] = home
-        self.score['away'] = away
-    
-    def set_date(self, date):
-        self.date = date
-    
-    def set_home_team(self, home_team):
-        self.home_team = home_team
-    
-    def set_away_team(self, away_team):
-        self.away_team = away_team
-    
-    def set_type(self, type):
-        self.type = type
+        return 'id: ' + str(self.id) + ', home_team: ' + self.home_team + ', away_team: ' + self.away_team + ', score: ' + str(self.score) + ', ' + self.date
 
     def point_diff(self) -> int:
-        return abs(self.score['home'] - self.score['away'])
+        return abs(self.score['HOME'] - self.score['HOME'])
 
 class Schedule():
     def __init__(self) -> None:
@@ -84,7 +62,6 @@ class PR():
 
     def win_expectancy_calc(self, Ro, OPPRo, is_home) -> int:
         return 1 / (10**(-((Ro - OPPRo) + Ro*(is_home*self.home_adv)) / self.x) + 1)
-
 
 class Team():
     def __init__(self, name) -> None:
