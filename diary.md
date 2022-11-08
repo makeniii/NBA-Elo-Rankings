@@ -157,7 +157,19 @@ I added a TeamSchedule subclass of Schedule becuase I realised that team schedul
   
 Welp, the nba server thinks I'm a bot and has at least suspended my ip. I can't recieve any data for the time being. I guess looping through all nba teams and creating the schedules was too much for the server. Hopefully it works fine later today or tomorrow.
 
-Actually, I fixed the problem by adding a 2 second sleep - someone had the same problem - after each call to the api. Creating the schedules for every team would mean that 2 minutes of execution would be added which isn't great. I added a simple time calculator to see how long it would take and it took 4 minutes and 14 seconds just create the schedules. I lowered the sleep time to 1 second and that reduced the time to 2 minutes and 14 seconds. So, while 2.1.1 is complete - again not tested - the time it takes to execute is high I think. I think a better solution would just have a total of 4 requests to get the data which would be the season logs and store it somewhere for the program to access. For now I think it would be easier to just store it in a variable in the program at the moment if I do go that route.
+Actually, I fixed the problem by adding a 2 second sleep - someone had the same problem - after each call to the api. Creating the schedules for every team would mean that 2 minutes of execution would be added which isn't great. I added a simple time calculator to see how long it would take and it took 4 minutes and 14 seconds just create the schedules. I lowered the sleep time to 1 second and that reduced the time to 2 minutes and 14 seconds. So, while 2.1.1 is complete - again not tested - the time it takes to execute is high I think. I think a better solution would just have a total of 4 requests to get the data which would be the season logs and store it somewhere for the program to access. For now I think it would be easier to just store it in a variable in the program at the moment if I do go that route. So that's 2.1 done.
 
 Implemented a PR class which will handle all the PR calculations and store the PR of the team. Completed 2.2.1 since it's a mathematical equation, I only need to check one example to know if it's correct because there are no cases to consider with numbers.
-  
+
+2.2.2 is a tricky because while I do have a game type, it doesn't tell me which one row the game belongs as seen here:
+
+| Type | Value |
+| ---- | ----- |
+| Finals | 60 |
+| Conference Finals | 50 |
+| 2nd Round Playoffs | 40 |
+| 1st Round Playoffs | 30 |
+| Play In | 24 |
+| Regular Season | 20 |
+
+I did find a function that returns a playoff series ID. Going to have to check if I'm able to use this to sort the games.
