@@ -143,6 +143,8 @@ I spent around 2 hours wasting time because I couldn't get the nba-api to instal
 
 I implemented the game class with a few changes. Will need to update class diagram to reflect those changes. I added an id field to the game class just in case I need to use it in the future. I also implemented some of the functionality of issue 2.1.1. That's without testing though. I also did have to install pandas to use dataFrames.
   
+Time: 6:00
+  
 # 7/11/21
 
 Continuing where I left off, yesterday I was able to get all NBA games for the 2021-22 season that includes; home, away, pts for both teams, and date. With this, I can complete all but the game type entry.
@@ -157,4 +159,29 @@ I added a TeamSchedule subclass of Schedule becuase I realised that team schedul
   
 Welp, the nba server thinks I'm a bot and has at least suspended my ip. I can't recieve any data for the time being. I guess looping through all nba teams and creating the schedules was too much for the server. Hopefully it works fine later today or tomorrow.
 
-Actually, I fixed the problem by adding a 2 second sleep - someone had the same problem - after each call to the api. Creating the schedules for every team would mean that 2 minutes of execution would be added which isn't great. I added a simple time calculator to see how long it would take and it took 4 minutes and 14 seconds just create the schedules. I lowered the sleep time to 1 second and that reduced the time to 2 minutes and 14 seconds. So, while 2.1.1 is complete - again not tested - the time it takes to execute is high I think. I think a better solution would just have a total of 4 requests to get the data which would be the season logs and store it somewhere for the program to access. For now I think it would be easier to just store it in a variable in the program at the moment.
+Actually, I fixed the problem by adding a 2 second sleep - someone had the same problem - after each call to the api. Creating the schedules for every team would mean that 2 minutes of execution would be added which isn't great. I added a simple time calculator to see how long it would take and it took 4 minutes and 14 seconds just create the schedules. I lowered the sleep time to 1 second and that reduced the time to 2 minutes and 14 seconds. So, while 2.1.1 is complete - again not tested - the time it takes to execute is high I think. I think a better solution would just have a total of 4 requests to get the data which would be the season logs and store it somewhere for the program to access. For now I think it would be easier to just store it in a variable in the program at the moment if I do go that route. So that's 2.1 done.
+
+Implemented a PR class which will handle all the PR calculations and store the PR of the team. Completed 2.2.1 since it's a mathematical equation, I only need to check one example to know if it's correct because there are no cases to consider with numbers.
+
+2.2.2 is a tricky because while I do have a game type, it doesn't tell me which one row the game belongs as seen here:
+
+| Type | Value |
+| ---- | ----- |
+| Finals | 60 |
+| Conference Finals | 50 |
+| 2nd Round Playoffs | 40 |
+| 1st Round Playoffs | 30 |
+| Play In | 24 |
+| Regular Season | 20 |
+
+I did find a function that returns a playoff series ID. Going to have to check if I'm able to use this to sort the games to what type they are.
+
+So, I am able to get the type of game for playoff games by using the series_id. This is great news. It makes it much easier for me now.
+  
+Now, back to what I said a bit earlier:
+
+> I think a better solution would just have a total of 4 requests to get the data which would be the season logs and store it somewhere for the program to access.
+
+I think that a solution to this problem would be to implement the season class, and then make the schedule. From there, make the team schedules from the season schedule that way I only have to use 2 api requests per season. In this case, I'll be only making 4 requests to the api to get the previous and current season games and playoff games. I'm also thinking of adding a playoff subclass to games, maybe even more subclasses like first round subclass and so on because that will make it even easier to have the value they are worth for the $\text{K}$ calculation because then I'll only need to change one line if the values were to change. Will also add a subclass of game to be a team specific game. So the data in that class will be specific to a team, so the plus minus field will be according to that team and the w/l will also be according to that team too. Once I refactor the code in `Team.create_schedule()`, it'll be much easier to read.
+
+Time: 6:00
