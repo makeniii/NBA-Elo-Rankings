@@ -145,13 +145,13 @@ I implemented the game class with a few changes. Will need to update class diagr
   
 Time: 6:00
   
-# 7/11/21
+# 7/11/22
 
 Continuing where I left off, yesterday I was able to get all NBA games for the 2021-22 season that includes; home, away, pts for both teams, and date. With this, I can complete all but the game type entry.
   
 Well I ran into a small problem, none of the functions in the nba-api returns data on playoff series
 
-# 8/11/21
+# 8/11/22
 
 Fell asleep at the computer yesterday. So, I had a little problem where I couldn't dynamically get the season based on the current date. I finally solved that. Now I'm able to create a schedule up to the teams last played game, which includes the previous season too.
 
@@ -182,6 +182,18 @@ Now, back to what I said a bit earlier:
 
 > I think a better solution would just have a total of 4 requests to get the data which would be the season logs and store it somewhere for the program to access.
 
-I think that a solution to this problem would be to implement the season class, and then make the schedule. From there, make the team schedules from the season schedule that way I only have to use 2 api requests per season. In this case, I'll be only making 4 requests to the api to get the previous and current season games and playoff games. I'm also thinking of adding a playoff subclass to games, maybe even more subclasses like first round subclass and so on because that will make it even easier to have the value they are worth for the $\text{K}$ calculation because then I'll only need to change one line if the values were to change. Will also add a subclass of game to be a team specific game. So the data in that class will be specific to a team, so the plus minus field will be according to that team and the w/l will also be according to that team too. Once I refactor the code in `Team.create_schedule()`, it'll be much easier to read.
+I think that a solution to this problem would be to implement the season class, and then make the schedule. From there, make the team schedules from the season schedule that way I only have to use 2 api requests per season. In this case, I'll be only making 4 requests to the api to get the previous and current season games and playoff games. I'm also thinking of adding a playoff subclass to games, maybe even more subclasses like first round subclass and so on because that will make it even easier to have the value they are worth for the $\text{K}$ calculation because then I'll only need to change one line if the values were to change. Will also add a subclass of game to be a team specific game. So the data in that class will be specific to a team, so the plus minus field will be according to that team and the W/L will also be according to that team too. Once I refactor the code in `Team.create_schedule()`, it'll be much easier to read.
 
 Time: 6:00
+
+# 10/11/22
+
+I implemented subclasses for the type of game being played (e.g. first round playoff game, play in game etc.). I added a weight attribute to `Game` which is what value the type of game is being played. Next, I will try to implement the `Season` class where it will create the schedule and from there, all teams can filter out the games that their team is playing so that I don't have to call the api too often and cause it to be slow. The api will only be called in the `Season` class when creating the schedule and not the `Team` class. Also, this means that there is a memory savings because there will be less copies of the same game saved in different locations.
+
+I set `Schedule` to store a `DataFrame` at first because of the useful methods I might want to use in the future and also the fact that the api returns the same type so it would be easier to just store it as is. So, while I was rewriting my code, I was able to remove ~100 lines total, of code from `Season.create_schedule()` and `Team.create_schedule()`. But then I realised that I would have to add to the `DataFrame` to store the weight of the type of game being played. Also, that the `Game` class and subclasses become obsolete now that it is not a part of any class. I guess I'm going to revert my code a bit.
+
+I'm currently in the process of refactoring my code again. I changed `Game` to store a `dict`, where the `HOME` key wouold store the `DataFrame` of the home team and the same for the away team. Now, I can have only one copy of the game in the season schedule and games are no longer repeating. However, execution time is pretty long compared to the previous solution I had.
+
+> I set `Schedule` to store a `DataFrame`...
+
+The code I currently have is much slower in comparison to the other solution where we were only dealing with `DataFrame` objects. The main reason why I prefer this design over the other is the fact that it is easier to understand the code from a person who isn't me.
