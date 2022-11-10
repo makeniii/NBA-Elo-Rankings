@@ -8,6 +8,7 @@ import numpy as np
 import datetime
 import math
 import time
+from typing import List
 
 '''
 A few helper functions just to shorten the length of code to make it easier to read
@@ -18,40 +19,84 @@ def get_games(season, type) -> pd.DataFrame:
 def get_games_default(type) -> pd.DataFrame:
     return leaguegamelog.LeagueGameLog(season_type_all_star=type).get_data_frames()[0]
 
+def create_team_names() -> List[str]:
+    team_list = list()
+
+    for team in teams.teams:
+        team_list.append(Team(team[1]))
+    
+    return team_list
+
 class Game():
-    def __init__(self, id, home_team, home_pts, away_team, away_pts, date):
-        self.id = id
-        self.home_team = home_team
-        self.away_team = away_team
-        self.score = {'HOME': home_pts, 'AWAY': away_pts}
-        self.date = date
+    def __init__(self, teams: pd.DataFrame):
+                  # this could be changed to a dictionary with home and away keys
+        self.teams = dict()
+        self.weight = 20
+
+        if 'vs.' in teams.MATCHUP[0]:
+            self.teams['HOME'] = teams.iloc[[0]]
+            self.teams['AWAY'] = teams.iloc[[1]]
+        else:
+            self.teams['AWAY'] = teams.iloc[[0]]
+            self.teams['HOME'] = teams.iloc[[1]]
 
     def __str__(self) -> str:
         return 'id: ' + str(self.id) + ', home_team: ' + self.home_team + ', away_team: ' + self.away_team + ', score: ' + str(self.score) + ', ' + self.date
     
     # do I need both?
     def __repr__(self) -> str:
-        return 'id: ' + str(self.id) + ', home_team: ' + self.home_team + ', away_team: ' + self.away_team + ', score: ' + str(self.score) + ', ' + self.date
+        return 'Home: ' + str(self.teams['HOME']) + '\nAway: ' + str(self.teams['AWAY']) + '\nWeight: ' + str(self.weight)
 
-    def point_diff(self) -> int:
-        return abs(self.score['HOME'] - self.score['HOME'])
 
+class PlayInGame(Game):
+    def __init__(self, teams: pd.DataFrame):
+        super().__init__(teams)
+        self.weight = 24
+
+class FirstRoundGame(Game):
+    def __init__(self, teams: pd.DataFrame):
+        super().__init__(teams)
+        self.weight = 30
+
+class SecondRoundGame(Game):
+    def __init__(self, teams: pd.DataFrame):
+        super().__init__(teams)
+        self.weight = 40
+        
+
+class ConferenceFinalGame(Game):
+    def __init__(self, teams: pd.DataFrame):
+        super().__init__(teams)
+        self.weight = 50
+
+class FinalGame(Game):
+    def __init__(self, teams: pd.DataFrame):
+        super().__init__(teams)
+        self.weight = 60
+
+'''
+Deciding to keep the original type(pd.DataFrame) returned from the nba api because the methods that come with
+are great and I might even use some more later down the line. Of course, I still might change it later.
+'''
 class Schedule():
     def __init__(self) -> None:
-        self.games = []
-        pass
+        self.games = list() 
 
-    def add_games(self, games):
-        self.games.extend(games)
-    
     def __str__(self) -> str:
         return str(self.games)
+
+    def add_games(self, games) -> None:
+        self.games.append(games)
+    
+class SeasonSchedule(Schedule): # Created this class simply for readability
+    def __init__(self) -> None:
+        super().__init__()
 
 class TeamSchedule(Schedule):
     def __init__(self) -> None:
         super().__init__()
 
-    def add_games(self, games):
+    def add_games(self, games) -> None:
         return super().add_games(games)
 
 class PR():
@@ -62,6 +107,38 @@ class PR():
 
     def win_expectancy_calc(self, Ro, OPPRo, is_home) -> int:
         return 1 / (10**(-((Ro - OPPRo) + Ro*(is_home*self.home_adv)) / self.x) + 1)
+
+class Season():
+    seasons = []                # Keep track of all seasons. Maybe move to own class?
+
+    def __init__(self, year, teams=[]) -> None:
+        self.year = year        # Year is an int of the year the season started. Might change later
+        self.schedule = SeasonSchedule()
+        Season.seasons.append(self)
+
+        if len(teams) == 0:
+            raise Exception("There are no teams to create season")
+
+        self.teams = teams
+    
+    def create_schedule(self):
+        regular_season_games_curr = get_games(self.year, 'Regular Season')
+        regular_season_games_curr.drop(columns=['VIDEO_AVAILABLE'], inplace=True)
+        regular_season_games_curr = regular_season_games_curr.sort_values(by=['GAME_ID']).reset_index(drop=True)
+
+        for i in range(0, len(regular_season_games_curr.index), 2):
+            self.schedule.add_games(Game(pd.concat([regular_season_games_curr.iloc[[i]], regular_season_games_curr.iloc[[i+1]]]).reset_index(drop=True)))
+
+        self.schedule.add_games(regular_season_games_curr)
+
+        playoff_games_curr = get_games(self.year, 'Playoffs')
+        playoff_games_curr.drop(columns=['VIDEO_AVAILABLE'], inplace=True)
+
+        if not playoff_games_curr.empty:
+            playoff_games_curr = playoff_games_curr.sort_values(by=['GAME_ID']).reset_index(drop=True)
+            self.schedule.add_games(playoff_games_curr)
+        
+        print(self.schedule)
 
 class Team():
     def __init__(self, name) -> None:
@@ -75,102 +152,13 @@ class Team():
     def add_to_schedule(self, games):
         self.schedule.add_games(games)
 
-    '''
-    I set the team schedule which is a list of dictionaries that include:
-        W: boolean
-        PTS: int
-        Point Diff: int
-        Opponent: str
-        Home: boolean
-        Date: str
-        Game: Game data - <Game>
-    '''
-    def create_schedule(self):
-        regular_season_games_curr = get_games_default('Regular Season')
-        time.sleep(1)
-        regular_season_games_curr = regular_season_games_curr[regular_season_games_curr['TEAM_ABBREVIATION'] == self.name].reset_index(drop=True)
-        playoff_games_curr = get_games_default('Playoffs')
-        time.sleep(1)
-        playoff_games_curr = playoff_games_curr[playoff_games_curr['TEAM_ABBREVIATION'] == self.name].reset_index(drop=True)
+    def create_schedule(self, seasons: List[Season]):
+        for season in seasons:
+            season_games = season.schedule.games
+            season_games = season_games[season_games['TEAM_ABBREVIATION'] == self.name].reset_index(drop=True)
+            self.schedule.add_games(season_games)
 
-        # Note: Not sure why there is a 2 at the front but I cut it off anyways. Not sure if there is always a 2 before the year but it looks to be so.
-        year = int(regular_season_games_curr.SEASON_ID[0][1:])
-
-        regular_season_games_hist = get_games(year-1, 'Regular Season')
-        time.sleep(1)
-        regular_season_games_hist = regular_season_games_hist[regular_season_games_hist['TEAM_ABBREVIATION'] == self.name]
-        playoff_games_hist = get_games(year-1, 'Playoffs')
-        time.sleep(1)
-        playoff_games_hist = playoff_games_hist[playoff_games_hist['TEAM_ABBREVIATION'] == self.name]
-
-        # Remember to drop duplicates for the schedule for the season class
-        sorted_regular_season_games_curr = regular_season_games_curr.sort_values(by=['GAME_ID'])
-        sorted_regular_season_games_curr = sorted_regular_season_games_curr.reset_index(drop=True).get(['GAME_DATE', 'TEAM_NAME', 'MATCHUP', 'PTS', 'PLUS_MINUS', 'GAME_ID'])
-        sorted_regular_season_games_hist = regular_season_games_hist.sort_values(by=['GAME_ID'])
-        sorted_regular_season_games_hist = sorted_regular_season_games_hist.reset_index(drop=True).get(['GAME_DATE', 'TEAM_NAME', 'MATCHUP', 'PTS', 'PLUS_MINUS', 'GAME_ID'])
-        sorted_playoff_games_hist = playoff_games_hist.sort_values(by=['GAME_ID'])
-        sorted_playoff_games_hist = sorted_playoff_games_hist.reset_index(drop=True).get(['GAME_DATE', 'TEAM_NAME', 'MATCHUP', 'PTS', 'PLUS_MINUS', 'GAME_ID'])
-
-        frames = []
-
-        regular_season_type_curr = ['Regular Season']*len(sorted_regular_season_games_curr)
-        sorted_regular_season_games_curr['TYPE'] = regular_season_type_curr
-
-        regular_season_type_hist = ['Regular Season']*len(sorted_regular_season_games_hist)
-        sorted_regular_season_games_hist['TYPE'] = regular_season_type_hist
-
-        playoff_type_hist = ['Playoffs']*len(sorted_playoff_games_hist)
-        sorted_playoff_games_hist['TYPE'] = playoff_type_hist
-
-        if not playoff_games_curr.empty:
-            sorted_playoff_games_curr = playoff_games_curr.sort_values(by=['GAME_ID'])
-            sorted_playoff_games_curr = sorted_playoff_games_curr.reset_index(drop=True).get(['GAME_DATE', 'TEAM_NAME', 'MATCHUP', 'PTS', 'PLUS_MINUS', 'GAME_ID'])
-            playoff_type_curr = ['Playoffs']*len(sorted_playoff_games_curr)
-            sorted_playoff_games_curr['TYPE'] = playoff_type_curr
-
-            frames = [sorted_regular_season_games_hist, sorted_playoff_games_hist, sorted_regular_season_games_curr, sorted_playoff_games_curr]
-        else:
-            frames = [sorted_regular_season_games_hist, sorted_playoff_games_hist, sorted_regular_season_games_curr]
-        
-        all_games = pd.concat(frames).reset_index(drop=True)
-
-        games = []
-
-        for game in all_games.to_dict('records'):
-            x = {}
-            matchup = game['MATCHUP'].split(' vs. ')
-            x['PTS'] = game['PTS']
-            x['PLUS_MINUS'] =  game['PLUS_MINUS']
-            x['DATE'] = game['GAME_DATE']
-
-            if x['PLUS_MINUS'] > 0:
-                x['W'] = True
-            else:
-                x['W'] = False
-
-            if len(matchup) == 1:
-                away_team = game['MATCHUP'].split(' @ ')[0]
-                home_team = game['MATCHUP'].split(' @ ')[1]
-                x['OPPONENT'] = home_team
-                x['HOME'] = False
-                away_pts = game['PTS']
-                home_pts = away_pts - game['PLUS_MINUS']
-            else:
-                away_team = matchup[1]
-                home_team = matchup[0]
-                x['OPPONENT'] = away_team
-                x['HOME'] = True
-                home_pts = game['PTS']
-                away_pts = home_pts - game['PLUS_MINUS']
-            
-
-            x['GAME'] = Game(game['GAME_ID'], home_team, home_pts, away_team, away_pts, game['GAME_DATE'], game['TYPE'])
-
-            games.append(x)
-
-            # print(Game(game['GAME_ID'], home_team, home_pts, away_team, away_pts, game['GAME_DATE'], game['TYPE']))
-        
-        self.schedule.add_games(games)
+        # print(self.schedule)
 
 # team_list = []
 
@@ -184,20 +172,29 @@ class Team():
 # print(team_list)
 # print(len(team_list))
 
-team = Team('GSW')
+# team = Team('GSW')
 
-playoff_games_hist = get_games(2021, 'Playoffs')
-playoff_games_hist = playoff_games_hist[playoff_games_hist['TEAM_ABBREVIATION'] == 'GSW']
-sorted_playoff_games_hist = playoff_games_hist.sort_values(by=['GAME_ID'])
-sorted_playoff_games_hist = sorted_playoff_games_hist.reset_index(drop=True).get(['GAME_DATE', 'MATCHUP', 'GAME_ID', 'TEAM_ID'])
-# print(sorted_playoff_games_hist)
+# playoff_games_hist = get_games(2021, 'Playoffs')
+# playoff_games_hist = playoff_games_hist[playoff_games_hist['TEAM_ABBREVIATION'] == 'GSW']
+# sorted_playoff_games_hist = playoff_games_hist.sort_values(by=['GAME_ID'])
+# sorted_playoff_games_hist = sorted_playoff_games_hist.reset_index(drop=True).get(['GAME_DATE', 'MATCHUP', 'GAME_ID', 'TEAM_ID'])
+# # print(sorted_playoff_games_hist)
 
-all_series = commonplayoffseries.CommonPlayoffSeries(season=2021).get_data_frames()[0]
+# all_series = commonplayoffseries.CommonPlayoffSeries(season=2021).get_data_frames()[0]
 
-playoff_games_hist['SERIES_ID'] = all_series['SERIES_ID']
+# playoff_games_hist['SERIES_ID'] = all_series['SERIES_ID']
 
-for playoff_game in all_series.to_dict('records'):
+# for playoff_game in all_series.to_dict('records'):
     
-    if int(playoff_game['SERIES_ID']) // 10**1 % 10 == 1:
-        print('is first round game')
-        print(playoff_game['SERIES_ID'])
+#     if int(playoff_game['SERIES_ID']) // 10**1 % 10 == 1:
+#         print('is first round game')
+#         print(playoff_game['SERIES_ID'])
+
+
+
+season = Season(2021, create_team_names())
+
+season.create_schedule()
+
+for team in season.teams:
+    team.create_schedule(season.seasons)
