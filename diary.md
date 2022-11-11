@@ -197,3 +197,39 @@ I'm currently in the process of refactoring my code again. I changed `Game` to s
 > I set `Schedule` to store a `DataFrame`...
 
 The code I currently have is much slower in comparison to the other solution where we were only dealing with `DataFrame` objects. The main reason why I prefer this design over the other is the fact that it is easier to understand the code from a person who isn't me.
+
+# 11/11/22
+
+> The code I currently have is much slower in comparison to the other solution where we were only dealing with `DataFrame` objects. The main reason why I prefer this design over the other is the fact that it is easier to understand the code from a person who isn't me.
+
+You know, I'm not sure if I should prioritise speed or readability. But, I'll make the decision once I fully refactor `Season.create_schedule` and `Team.create_schedule`. It's just a really hard decision. I'm not the best with OOP at the moment - my knowledge is a bit fuzzy because it has been a while now since I studied the unit at university.
+
+I'm actually going to keep `DataFrames` as the main object which keeps the schedule of the sesaon. So, from:
+
+```
+Schedule.games = List[Game]
+```
+
+To:
+
+```
+Schedule.games = pd.DataFrame
+```
+
+Hopefully, in the future when the application gets a bit more complicated, the change will be more advantageous.
+
+Actually, I take that back. I realised that the weight attribute wouldn't really make sense to be a part of the `DataFrame`. There is also the fact that it would be cleaner to have a class attribute weight because changing the one variable means a change to the functions that are using the attribute so it's much easier.
+
+Flip-flopped again. I changed:
+
+```
+Schedule.games = List[Game]
+```
+
+To:
+
+```
+Schedule.games = pd.DataFrame
+```
+
+Hopefully this is the last time I change this but I doubt it. In the future I'll probably refactor the code again. Still haven't finished implementing the changes to both `Team` and `Season`.
