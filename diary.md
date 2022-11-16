@@ -42,7 +42,7 @@ Going on a little tangent, taking this game by itself, and you might think that 
 
 \* I'm taking the ratings and comparing them to the other 29 teams in the NBA. Obviously, comparing a smaller sample size to the rest of the NBA doesn't make these statements true. But, it does paint an intreseting picture. This also applies to the rest of the comparisons, doubly so for the playoffs since there are much fewer games.
 
-Not sure why I went on a Memphis rant - IYKYK. Now, returning to my original point, I think that a team beating seven opponents in a row by a point differential of 10 is more impressive than winning by 70 for a single game. I think that consistancy means more for how good a team is rather than these anomalies. Not sure yet to how I could reward teams with a high point differential but it's something to think about in the future. Also, I should probably add a cap to the point of how much the point differential will affect $\text{K}$. Thinking of something around 20.
+Not sure why I went on a Memphis rant. Now, returning to my original point, I think that a team beating seven opponents in a row by a point differential of 10 is more impressive than winning by 70 for a single game. I think that consistancy means more for how good a team is rather than these anomalies. Not sure yet to how I could reward teams with a high point differential but it's something to think about in the future. Also, I should probably add a cap to the point of how much the point differential will affect $\text{K}$. Thinking of something around 20.
 
 ### W
 
@@ -233,3 +233,35 @@ Schedule.games = pd.DataFrame
 ```
 
 Hopefully this is the last time I change this but I doubt it. In the future I'll probably refactor the code again. Still haven't finished implementing the changes to both `Team` and `Season`.
+
+# 16/11/22
+
+Start: 11:30am
+
+To start off with, I forgot to push and add to my diary on the 12/11/22. Guess working on the project til I fall asleep is not a great idea. I did make some major changes to the formula though. 
+
+I guess I never really thought about the range of $\text{R}_n$. I orginally had plans for $\text{R}_n, 0 \leq \text{R}_n \leq 100$, but from the original formula, you can see that there nothing enforcing the range for the function. I had just thought that I'll scale $\text{R}_n$ to $0 \leq \text{R}_n \leq 100$. Which is something that I'll probably still do because I think that ratings between $0$ and $100$ is more intuitive than ratings in the thousands. This is something I'll come back to though. The problem with what I had before was that I was thinking, coding, and testing $\text{R}_n$ in terms of ratings between $0$ and $100$ instead of $1000\text{s}$. 
+
+Now the next problem is how do I scale $\text{R}_n$ to $\text{R}_n, 0 \leq \text{R}_n \leq 100$ without knowing the start and endpoints of the scale. [This post from FiveThrityEight](https://projects.fivethirtyeight.com/complete-history-of-the-nba/#warriors) show us that according to their Elo rating system, the highest elo achieved was by the 17 Golden State Warriors. With an Elo of $1865$ they had surpassed the 96 Chicago Bulls' $1853$. No surprise there really. Greatest team of all time should have the highest Elo rating. [Here](https://fivethirtyeight.com/features/how-we-calculate-nba-elo-ratings/), FiveThirtyEight explains their NBA Elo system and they include a table that shows how an Elo would roughly translate to record and team description. With the Warriors and their rating of $1865$, it would translate to an all time great time, which they were. They go as low as $1200$ which would be a historically awful team. Now, back to the scale. I think I should set the upper limit $1900$ and the lower limit to $1100$. Of course, this can change if there is a team that actually goes above/below this.
+
+From using the two points, $(1100, 0)$ and $(1900, 100)$. The linear formula to scale $\text{R}_n$ is:
+$$f(x) = \frac{1}{8}x -\frac{275}{2}$$
+
+Not going to scale $\text{R}_n$ until it's time to display to users because then there's less confusion of whether it's scaled or not and I would only have scale once. So I'll need to now implement this scale function in the `PR` class.
+
+Next, I changed the $\text{W}_e$ formula a bit. Now,
+
+$$ 
+\text{HomeAdv} =
+  \begin{cases}
+    \displaystyle 100 & \quad \text{home game} \\
+    \displaystyle 0 & \quad \text{away game}
+  \end{cases}
+$$
+
+Where it was previously, $\text{HomeAdv}=\text{R}_\text{o}\times0.1$. Now that I've realised that the Elo ratings are as high as 1800, the $0.1$ multiplier for $\text{HomeAdv}$ is quite a lot. The [FiveThirtyEight](https://fivethirtyeight.com/features/how-we-calculate-nba-elo-ratings/) and [Football](http://www.eloratings.net/about) rating systems both use a constant of $100$ to equate home advantage. I'm not a mathematician so I'll stick with $100$ too.
+
+Lastly, I set `PR.pr = 1500`. From what I've searched and from [FiveThirtyEight](https://fivethirtyeight.com/features/how-we-calculate-nba-elo-ratings/), the average Elo rating is $1500$. So, that's why I set the default rating to $1500$.
+
+Now, moving on to current changes.
+
