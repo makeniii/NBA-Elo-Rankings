@@ -27,54 +27,6 @@ def create_teams():
     
     return team_list
 
-class Game():
-    def __init__(self, teams: pd.DataFrame):
-                  # this could be changed to a dictionary with home and away keys
-        self.teams = teams
-
-    def __str__(self) -> str:
-        return 'id: ' + str(self.id) + ', home_team: ' + self.home_team + ', away_team: ' + self.away_team + ', score: ' + str(self.score) + ', ' + self.date
-    
-    # do I need both?
-    def __repr__(self) -> str:
-        return str(self.teams) + '\nWeight: ' + str(self.weight) + '\n'
-
-class RegularGame(Game):
-    weight = 20
-
-    def __init__(self, teams: pd.DataFrame):
-        super().__init__(teams)
-
-class PlayInGame(Game):
-    weight = 24
-
-    def __init__(self, teams: pd.DataFrame):
-        super().__init__(teams)
-
-class FirstRoundGame(Game):
-    weight = 30
-
-    def __init__(self, teams: pd.DataFrame):
-        super().__init__(teams)
-
-class SecondRoundGame(Game):
-    weight = 40
-
-    def __init__(self, teams: pd.DataFrame):
-        super().__init__(teams)
-        
-class ConferenceFinalGame(Game):
-    weight = 50
-
-    def __init__(self, teams: pd.DataFrame):
-        super().__init__(teams)
-
-class FinalGame(Game):
-    weight = 60
-
-    def __init__(self, teams: pd.DataFrame):
-        super().__init__(teams)
-
 '''
 Deciding to keep the original type(pd.DataFrame) returned from the nba api because the methods that come with
 are great and I might even use some more later down the line. Of course, I still might change it later.
@@ -97,8 +49,6 @@ class SeasonSchedule(Schedule): # Created this class simply for readability
         games = get_games(year, 'Regular Season')
         games = games.sort_values(by=['GAME_ID']).reset_index(drop=True)
         games['GAME_TYPE'] = 'Regular Season'
-
-        
 
         playin_games = get_games(year, 'PlayIn')
         playin_games.drop(columns=['VIDEO_AVAILABLE'], inplace=True)
@@ -137,6 +87,7 @@ class SeasonSchedule(Schedule): # Created this class simply for readability
         
         self.games['GAME_NUM'] = pd.factorize(self.games['GAME_ID'])[0] + 1
         self.games = self.games.set_index('GAME_NUM')
+        self.games = self.games.sort_index(ascending=True)
 
     def get_team_schedule(self, team_abbr) -> pd.DataFrame:
         return self.games[self.games.MATCHUP.str.contains(team_abbr)]
@@ -153,52 +104,52 @@ class TeamSchedule(Schedule):
     def get_game(self, game_num) -> pd.DataFrame:
         return self.games[self.games.index == game_num]
 
-class PR():
+class Elo():
+    home_adv = 100
+    x = 400
+    elo_avg = 1500
+    k = 20
+
     def __init__(self) -> None:
-        self.x = 400
-        self.home_adv = 100
-        self.pr = 1500
+        self.elo = 1500
 
-    def win_expectancy_calc(self, Ro, OPPRo, location) -> int:
+    def win_expectancy_calc(self, OPPRo: int, location: str) -> int:
         if location == 'Home':
-            is_home = True
+            is_home = 1
         else:
-            is_home = False
+            is_home = -1
 
-        return 1 / (10**(-((Ro - OPPRo) + (is_home*self.home_adv)) / self.x) + 1)
-    
-    def k_calc(self, game_type) -> int:
-        k = 0
-
-        if game_type == 'Regular Season':
-            k = 20
-        elif game_type == 'PlayIn':
-            k = 24
-        elif game_type == 'First Round':
-            k = 30
-        elif game_type == 'Second Round':
-            k = 40
-        elif game_type == 'Conference Finals':
-            k = 50
-        elif game_type == 'Finals':
-            k = 60
-
-        return k
+        return 1 / (10**(-((self.elo - OPPRo) + (is_home*self.home_adv)) / self.x) + 1)
 
     # only using 1 or 0 because I have to get game data to see if the game went to OT. 
     # Will do in a later iteration
     def w_calc(self, outcome):
         return 1 if outcome == 'W' else 0
 
-    def pr_calc(self, K, W, We):
-        self.pr = self.pr + K * (W - We)
+    def elo_calc(self, win: str, OPPRo: int, game_location: str, mov):
+        self.elo = self.elo + self.k * mov * (self.w_calc(win) - self.win_expectancy_calc(OPPRo, game_location))
+    
+    def carry_over(self):
+        self.elo = (.75 * self.elo) + (.25 * self.elo_avg)
+    
+    def margin_of_victory(self, margin, OPPRo, location):
+        if location == 'Home':
+            is_home = 1
+        else:
+            is_home = -1
+
+        return ((margin + 3)**0.8) / (7.5 + 0.006 * (self.elo - OPPRo + (is_home*self.home_adv)))
 
 class Season():
-    seasons = []                # Keep track of all seasons. Maybe move to own class?
+    seasons = list()                # Keep track of all seasons. Maybe move to own class?
 
     def __init__(self, year, teams=[]) -> None:
         self.year = year        # Year is an int of the year the season started. Might change later
         self.schedule = SeasonSchedule()
+
+        if len(self.seasons) > 0:
+            self.seasons[-1].end_season()
+
         Season.seasons.append(self)
 
         if len(teams) == 0:
@@ -223,25 +174,38 @@ class Season():
         
         raise Exception('get_team_abbreviation(' + team_abbreviation + '): Team not found')
 
-    def initialise_teams_pr(self):
+    def initialise_teams_elo(self):
         # For each game (x1323):
         games = self.schedule.games
 
-        for i in games.index[::2]:
+        for i in range(0, len(games), 2):
             # For each team (x2)
-            # print(games.iloc[i]['TEAM_NAME'])
-            # get team
-            pass
+            team_a: Team = self.get_team_abbreviation(games.iloc[i]['TEAM_ABBREVIATION'])
+            team_b: Team = self.get_team_abbreviation(games.iloc[i+1]['TEAM_ABBREVIATION'])
 
-                # calculatePR
-        
-        print(games.iloc[games.index[2]]['TEAM_NAME'])
+            # calculate the margin of victory (mov)
+            if games.iloc[i]['PLUS_MINUS'] > 0:
+                mov = team_a.elo.margin_of_victory(games.iloc[i]['PLUS_MINUS'], team_b.elo.elo, games.iloc[i]['LOCATION'])
+            else:
+                mov = team_b.elo.margin_of_victory(games.iloc[i+1]['PLUS_MINUS'], team_a.elo.elo, games.iloc[i+1]['LOCATION'])
+
+            old_team_a_elo = team_a.elo.elo
+            team_a.calculate_elo(team_b.elo.elo, games.iloc[i], mov)
+            team_b.calculate_elo(old_team_a_elo, games.iloc[i+1], mov)
+
+            if games.iloc[i]['GAME_TYPE'] == 'Finals':
+                print(team_a.name + ': ' + str(team_a.elo.elo))
+                print(team_b.name + ': ' + str(team_b.elo.elo))
+    
+    def end_season(self):
+        for team in self.teams:
+            team.calculate_elo_carry_over()
 
 class Team():
     def __init__(self, name, abbreviation) -> None:
         self.name = name
         self.abbreviation = abbreviation
-        self.pr = PR()
+        self.elo = Elo()
         self.schedule = TeamSchedule()
 
     def __repr__(self) -> str:
@@ -250,15 +214,16 @@ class Team():
     def add_to_schedule(self, games):
         self.schedule.add_games(games)
 
-    def initialise_schedule(self, seasons: List[Season]):
-        for season in seasons:
-            season_games = season.schedule.get_team_schedule(self.abbreviation)
-            season_games = season_games.reset_index(drop=True)
-            self.schedule.add_games(season_games)
+    def add_season_schedule(self, season: Season):
+        season_games = season.schedule.get_team_schedule(self.abbreviation)
+        season_games = season_games.reset_index(drop=True)
+        self.schedule.add_games(season_games)
     
-    def calculate_pr(self, opp_team, game: pd.DataFrame):
-        # print(game)
-        pass
+    def calculate_elo(self, opp_team_elo: int, game: pd.Series, mov):
+        self.elo.elo_calc(game['WL'], opp_team_elo, game['LOCATION'], mov)
+    
+    def calculate_elo_carry_over(self):
+        self.elo.carry_over()
 
 
 # team_list = []
@@ -292,16 +257,59 @@ class Team():
 #         print(playoff_game['SERIES_ID'])
 
 curr_time = time.time()
+team_list = create_teams()
+season21 = Season(2021, team_list)
+print('====================================2021====================================')
+season21.initialise_schedule()
+season21.initialise_teams_elo()
 
-season = Season(2021, create_teams())
+for team in team_list:
+    team.add_season_schedule(season21)
 
-season.initialise_schedule()
+gsw: Team = season21.get_team_abbreviation('GSW')
 
-season.initialise_teams_pr()
+elos = list()
 
-for team in season.teams:
-    team.initialise_schedule(season.seasons)
+for team in team_list:
+    x = dict()
+    x['TEAM_NAME'] = team.name
+    x['Elo'] = team.elo.elo
 
-team: Team = season.get_team_abbreviation('GSW')
+    elos.append(x)
 
+elo_standings = sorted(elos, key=lambda d: d['Elo'], reverse=True)
+
+print()
+print('====Elo Standings====')
+for team in elo_standings:
+    print(team['TEAM_NAME'] + ': ' + str(team['Elo']))
+
+print()
+
+print('====================================2022====================================')
+
+sesaon22 = Season(2022, team_list)
+sesaon22.initialise_schedule()
+sesaon22.initialise_teams_elo()
+
+for team in team_list:
+    team.add_season_schedule(sesaon22)
+
+elos = list()
+
+for team in team_list:
+    x = dict()
+    x['TEAM_NAME'] = team.name
+    x['Elo'] = team.elo.elo
+
+    elos.append(x)
+
+elo_standings = sorted(elos, key=lambda d: d['Elo'], reverse=True)
+
+print()
+print('====Elo Standings====')
+for team in elo_standings:
+    print(team['TEAM_NAME'] + ': ' + str(team['Elo']))
+
+print()
 print('Execution time: ' + str(time.time() - curr_time))
