@@ -265,3 +265,51 @@ Lastly, I set `PR.pr = 1500`. From what I've searched and from [FiveThirtyEight]
 
 Now, moving on to current changes.
 
+I've realised that I'm probably using the wrong termanology when I have a `PR` attribute named `pr` instead of `elo` because the power ranking is based on Elo. The power rankings is just team standings based on Elo. So, I'm going to change that to attribute to `elo`. Actually, it really applies to the whole class. I renamed the `PR` class and attribute to `Elo` and everything else that had `pr` in the name.
+
+I'm currently trying to implement an efficient method to initialise all teams Elo rating. The fastest way seems to be through pandas vectorization or numpy vectorization. But before that, I found a little error in my $\text{W}_e$ calculations. I found that the $\text{HomeTeam W}_e + \text{AwayTeam W}_e \neq 1$. This obviously is wrong. I found that the reason why it was wrong, was because I didn't account for the fact the the $\text{RDiff}$ when calculating for an away team would have to include $100$ points for the home team advantage. It was an easy fix though.
+
+Back to vectorization, I couldn't figure out how to use vectorization for `Season.initialise_teams_elo()`. So, I just use a for loop with a step of 2. Probably come back to this to maybe find a more efficient way of doing this.
+
+I modified:
+```
+Team.initialise_schedule(seasons: List[Season])
+```
+
+to:
+```
+Team.add_season_schedule(season: Season)
+```
+
+I did this because it was easier to add other seasons once the team schedule was initialised. Using the old method would replicate games because it would iterate through all seasons to add games.
+
+I've adjusted the value of $\text{K}$ depending on the game that is being played. It will probably change again later on.
+
+I've found a way to account for the margin of victory thanks to [FiveThirtyEight](https://fivethirtyeight.com/features/how-we-calculate-nba-elo-ratings/). I'm going to try and implement this now instead of later.
+
+I've implemented the margin of victory calculator for the `Elo` class. Unfortunately, it isn't as clean as I would have hoped. Function could use a refactor later on. 
+
+Earlier I said,
+> I've come up with these constants for what game is being played. For games being played in the playoffs, opponent teams are better and the deeper you go, the better the teams _should be_.
+>| Type | Value |
+>| ---- | ----- |
+>| Finals | 60 |
+>| Conference Finals | 50 |
+>| 2nd Round Playoffs | 40 |
+>| 1st Round Playoffs | 30 |
+>| Play In | 24 |
+>| Regular Season | 20 |
+
+I was completely wrong. $\text{K}$ having a higher value the further into the playoffs actually less makes sense to me because the higher $\text{K}$ is, the more variance $\text{R}_n$ would have. So, I've adjusted the value of $\text{K}$ to $$\text{K} = 20$$
+
+I took [FiveThirtyEight's](https://fivethirtyeight.com/features/how-we-calculate-nba-elo-ratings/) $\text{K}$ value and after some testing and trying different values, I decided on that value. Not because the people behind FiveThirtyEight are smarter than me. Also, FiveThirtyEight has a Elo ratings to point spread formula which definitely be useful in the future. 
+
+So, now that the margin of victory is implemented, that means that the formula has now changed to accomodate this change. The formula now is:
+
+$$\text{R}_n=\text{R}_o+\text{K}\times\text{MOV}\times\left(\text{W}-\frac{1}{10^{-\frac{\text{RDiff}+(\text{R}_o\times0.1)}{x}}+1}\right)$$
+
+I've finally deleted the `Game` class and it's subclasses. It'll be easy to re-do if I need to so nothing is really lost.
+
+So, that's all for the first milestone, which is the backend of the app. Now, all that I need to do to complete it, is to code a testing suit for the main functions.
+
+End: 6:30pm
