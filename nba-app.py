@@ -19,11 +19,11 @@ def get_games(season, type) -> pd.DataFrame:
 def get_games_default(type) -> pd.DataFrame:
     return leaguegamelog.LeagueGameLog(season_type_all_star=type).get_data_frames()[0]
 
-def create_team_names() -> List[str]:
+def create_teams():
     team_list = list()
 
-    for team in teams.teams:
-        team_list.append(Team(team[1]))
+    for team in teams.get_teams():
+        team_list.append(Team(team['full_name'], team['abbreviation']))
     
     return team_list
 
@@ -94,32 +94,27 @@ class SeasonSchedule(Schedule): # Created this class simply for readability
         super().__init__()
 
     def initialise(self, year):
-        regular_season_games_curr = get_games(year, 'Regular Season')
-        regular_season_games_curr.drop(columns=['VIDEO_AVAILABLE'], inplace=True)
-        regular_season_games_curr = regular_season_games_curr.sort_values(by=['GAME_ID']).reset_index(drop=True)
-        regular_season_games_curr['LOCATION'] = np.where(regular_season_games_curr['MATCHUP'].str.contains('vs.'), 'Home', 'Away')
-        regular_season_games_curr['GAME_TYPE'] = 'Regular Season'
-        regular_season_games_curr['ID'] = pd.factorize(regular_season_games_curr['GAME_ID'])[0] + 1
-        regular_season_games_curr = regular_season_games_curr.set_index('ID')
+        games = get_games(year, 'Regular Season')
+        games = games.sort_values(by=['GAME_ID']).reset_index(drop=True)
+        games['GAME_TYPE'] = 'Regular Season'
 
-        # print(regular_season_games_curr)
+        
 
-        # Duplicate game_ids are the stat lines of the two teams, so combine into one game
-        for i in range(0, len(regular_season_games_curr.index), 2):
-            self.add_games(pd.concat([regular_season_games_curr.iloc[[i]], regular_season_games_curr.iloc[[i+1]]]).reset_index(drop=True))
+        playin_games = get_games(year, 'PlayIn')
+        playin_games.drop(columns=['VIDEO_AVAILABLE'], inplace=True)
 
-        playoff_games_curr = get_games(year, 'Playoffs')
-        playoff_games_curr.drop(columns=['VIDEO_AVAILABLE'], inplace=True)
+        if not playin_games.empty:
+            playin_games['GAME_TYPE'] = 'PlayIn'
+            games = pd.concat([games, playin_games])
 
-        if not playoff_games_curr.empty:
-            playoff_games_curr = playoff_games_curr.sort_values(by=['GAME_ID']).reset_index(drop=True)
-            playoff_games_curr['LOCATION'] = np.where(playoff_games_curr['MATCHUP'].str.contains('vs.'), 'Home', 'Away')
+        playoff_games = get_games(year, 'Playoffs')
 
+        if not playoff_games.empty:
             conditions = [
-                playoff_games_curr['GAME_ID'].str.rfind('1', 7, 8) == 7,
-                playoff_games_curr['GAME_ID'].str.rfind('2', 7, 8) == 7,
-                playoff_games_curr['GAME_ID'].str.rfind('3', 7, 8) == 7,
-                playoff_games_curr['GAME_ID'].str.rfind('4', 7, 8) == 7
+                playoff_games['GAME_ID'].str.rfind('1', 7, 8) == 7,
+                playoff_games['GAME_ID'].str.rfind('2', 7, 8) == 7,
+                playoff_games['GAME_ID'].str.rfind('3', 7, 8) == 7,
+                playoff_games['GAME_ID'].str.rfind('4', 7, 8) == 7
             ]
 
             choices = [
@@ -129,33 +124,74 @@ class SeasonSchedule(Schedule): # Created this class simply for readability
                 'Finals'
             ]
 
-            playoff_games_curr['GAME_TYPE'] = np.select(conditions, choices, default='NOT FOUND')
+            playoff_games['GAME_TYPE'] = np.select(conditions, choices, default='NOT FOUND')
+            games = pd.concat([games, playoff_games])
+        
+        games.drop(columns=['VIDEO_AVAILABLE'], inplace=True)
+        games['LOCATION'] = np.where(games['MATCHUP'].str.contains('vs.'), 'Home', 'Away')
 
-            # Duplicate game_ids are the stat lines of the two teams, so combine into one game
-            for i in range(0, len(playoff_games_curr.index), 2):
-                self.add_games(pd.concat([playoff_games_curr.iloc[[i]], playoff_games_curr.iloc[[i+1]]]).reset_index(drop=True))
+        # Want to reorder the columns but not really bothered to do it just to swap GAME_TYPE and LOCATION
 
-    def get_team_schedule(self, team) -> pd.DataFrame:
-        return self.games[self.games.MATCHUP.str.contains(team)]
+        for i in range(0, len(games.index), 2):
+            self.add_games(pd.concat([games.iloc[[i]], games.iloc[[i+1]]]).reset_index(drop=True))
+        
+        self.games['GAME_NUM'] = pd.factorize(self.games['GAME_ID'])[0] + 1
+        self.games = self.games.set_index('GAME_NUM')
+
+    def get_team_schedule(self, team_abbr) -> pd.DataFrame:
+        return self.games[self.games.MATCHUP.str.contains(team_abbr)]
 
 class TeamSchedule(Schedule):
     def __init__(self) -> None:
         super().__init__()
 
     def add_games(self, games) -> None:
-        return super().add_games(games)
+        super().add_games(games)
+        self.games['GAME_NUM'] = pd.factorize(self.games['GAME_ID'])[0] + 1
+        self.games = self.games.set_index('GAME_NUM')
 
     def get_game(self, game_num) -> pd.DataFrame:
         return self.games[self.games.index == game_num]
 
 class PR():
     def __init__(self) -> None:
-        self.x = 100
-        self.home_adv = 0.1
-        self.pr = -1
+        self.x = 400
+        self.home_adv = 100
+        self.pr = 1500
 
-    def win_expectancy_calc(self, Ro, OPPRo, is_home) -> int:
-        return 1 / (10**(-((Ro - OPPRo) + Ro*(is_home*self.home_adv)) / self.x) + 1)
+    def win_expectancy_calc(self, Ro, OPPRo, location) -> int:
+        if location == 'Home':
+            is_home = True
+        else:
+            is_home = False
+
+        return 1 / (10**(-((Ro - OPPRo) + (is_home*self.home_adv)) / self.x) + 1)
+    
+    def k_calc(self, game_type) -> int:
+        k = 0
+
+        if game_type == 'Regular Season':
+            k = 20
+        elif game_type == 'PlayIn':
+            k = 24
+        elif game_type == 'First Round':
+            k = 30
+        elif game_type == 'Second Round':
+            k = 40
+        elif game_type == 'Conference Finals':
+            k = 50
+        elif game_type == 'Finals':
+            k = 60
+
+        return k
+
+    # only using 1 or 0 because I have to get game data to see if the game went to OT. 
+    # Will do in a later iteration
+    def w_calc(self, outcome):
+        return 1 if outcome == 'W' else 0
+
+    def pr_calc(self, K, W, We):
+        self.pr = self.pr + K * (W - We)
 
 class Season():
     seasons = []                # Keep track of all seasons. Maybe move to own class?
@@ -179,10 +215,32 @@ class Season():
                 return team
         
         raise Exception('get_team(' + team_name + '): Team not found')
+    
+    def get_team_abbreviation(self, team_abbreviation):
+        for team in self.teams:
+            if team.abbreviation == team_abbreviation:
+                return team
+        
+        raise Exception('get_team_abbreviation(' + team_abbreviation + '): Team not found')
+
+    def initialise_teams_pr(self):
+        # For each game (x1323):
+        games = self.schedule.games
+
+        for i in games.index[::2]:
+            # For each team (x2)
+            # print(games.iloc[i]['TEAM_NAME'])
+            # get team
+            pass
+
+                # calculatePR
+        
+        print(games.iloc[games.index[2]]['TEAM_NAME'])
 
 class Team():
-    def __init__(self, name) -> None:
+    def __init__(self, name, abbreviation) -> None:
         self.name = name
+        self.abbreviation = abbreviation
         self.pr = PR()
         self.schedule = TeamSchedule()
 
@@ -194,18 +252,14 @@ class Team():
 
     def initialise_schedule(self, seasons: List[Season]):
         for season in seasons:
-            season_games = season.schedule.get_team_schedule(self.name)
+            season_games = season.schedule.get_team_schedule(self.abbreviation)
             season_games = season_games.reset_index(drop=True)
-            season_games['GAME_NUM'] = pd.factorize(season_games['GAME_ID'])[0] + 1
-            season_games = season_games.set_index('GAME_NUM')
             self.schedule.add_games(season_games)
+    
+    def calculate_pr(self, opp_team, game: pd.DataFrame):
+        # print(game)
+        pass
 
-            # print('---------------------------------')
-            # print(self.name + ' Schedule')
-            # print('---------------------------------')
-            # print(season_games)
-
-        # print(self.schedule)
 
 # team_list = []
 
@@ -237,16 +291,17 @@ class Team():
 #         print('is first round game')
 #         print(playoff_game['SERIES_ID'])
 
-
 curr_time = time.time()
 
-season = Season(2021, create_team_names())
+season = Season(2021, create_teams())
 
 season.initialise_schedule()
-print(season.schedule.games)
 
-# for team in season.teams:
-#     team.initialise_schedule(season.seasons)
+season.initialise_teams_pr()
 
-# team: Team = season.get_team('GSW')
-# print(team.schedule.get_game(105))
+for team in season.teams:
+    team.initialise_schedule(season.seasons)
+
+team: Team = season.get_team_abbreviation('GSW')
+
+print('Execution time: ' + str(time.time() - curr_time))
