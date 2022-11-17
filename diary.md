@@ -313,3 +313,15 @@ I've finally deleted the `Game` class and it's subclasses. It'll be easy to re-d
 So, that's all for the first milestone, which is the backend of the app. Now, all that I need to do to complete it, is to code a testing suit for the main functions.
 
 End: 6:30pm
+
+# 17/11/22
+
+Start: 9:30pm
+
+I found a back-up to the NBA api if there's something I can't do on there. It's the [basketball reference scraper](https://github.com/vishaalagartha/basketball_reference_scraper). Basically as the name suggests, it's a web scraper for the [basketball reference](https://www.basketball-reference.com/). Why would I need this over the NBA api? Well, because the NBA api blocks users after too many rapid calls (~3-4 calls in short succession) and I _don't think_ it has future schedules which would be something that would be important if I ever try to predict outcomes of future games based on Elo ratings.
+
+There's an ESPN api but I'm not too confident in that. There doesn't seem to be much info or users of this api when I search "ESPN api" on google so it's not looking promising. Really the only comment I found on it was that it was terrible. But again, it does have a schedule endpoint which would be useful.
+
+Lastly, I found another NBA library, but this time the library pulls information from both nba stats and data nba. It has been archived so the data and maybe even the functions are out of date and won't work anymore. I saw a comment that because It hasn't been updated in a while, the data only goes up to OCT 2020 which is quite outdated for what I'm _currently_ doing. Maybe I could still make use of this library down the line if I needed stats from before 2021 and other options were exhausted.
+
+End: 10pm
