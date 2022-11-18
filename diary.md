@@ -325,3 +325,11 @@ There's an ESPN api but I'm not too confident in that. There doesn't seem to be 
 Lastly, I found another NBA library, but this time the library pulls information from both nba stats and data nba. It has been archived so the data and maybe even the functions are out of date and won't work anymore. I saw a comment that because It hasn't been updated in a while, the data only goes up to OCT 2020 which is quite outdated for what I'm _currently_ doing. Maybe I could still make use of this library down the line if I needed stats from before 2021 and other options were exhausted.
 
 End: 10pm
+
+# 18/11/22
+
+Start: 8:45pm
+
+I tried to organise my testing suite and my current code by separating the code into folders. So adding something like a backend, frontend, and test folder etc. But, when I created my test file, I tried to import my code using relative imports but it just wouldn't work. Hopefully I either find a fix for this later on or if I just use the root directory, the code base doesn't get too big. I did rename my file main file and added new ones though.
+
+Not sure how I spent two hours but I was only able to get a static record(panda.Dataframe) of the playoff games in the 2022 season. Well I actually am sure of how. I spent time going back and forth from another short program that I wrote to take in lines of input, each line is a new element in an array, and at the end, print the array. Copy and paste the output from the program and paste it into the test file to create a static list to add to the Dataframe. I realise around a third of the way, that I could just easily just iterate over the columns and convert each column into a list to make it easier than using the useless program that I wrote. Going to be using this subset of the 2022 season to conduct my tests on. Decided to make it static instead of loading from the NBA api because of the case that the NBA api were to ever close, break, or something unforeseen were to happen. Hopefully these are the only static records I need for the tests because they were a pain the arse to copy and paste to and from.
