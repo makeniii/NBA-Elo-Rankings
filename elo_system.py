@@ -89,6 +89,27 @@ class SeasonSchedule(Schedule): # Created this class simply for readability
         self.games = self.games.set_index('GAME_NUM')
         self.games = self.games.sort_index(ascending=True)
 
+        # Remove columns that aren't used... (yet)
+        keepers = [
+            'TEAM_ABBREVIATION',
+            'TEAM_NAME',
+            'GAME_ID',
+            'MATCHUP',
+            'WL',
+            'PLUS_MINUS',
+            'GAME_TYPE',
+            'LOCATION'
+        ]
+
+        set_col = set(self.games.columns.tolist())
+        set_keepers = set(keepers)
+
+        remove = set_col - (set_col & set_keepers)
+
+        self.games.drop(columns=remove, inplace=True)
+
+        self.games = self.games.dropna()
+
     def get_team_schedule(self, team_abbr) -> pd.DataFrame:
         return self.games[self.games.MATCHUP.str.contains(team_abbr)]
 
@@ -256,60 +277,66 @@ class Team():
 #         print('is first round game')
 #         print(playoff_game['SERIES_ID'])
 
-# curr_time = time.time()
-# team_list = create_teams()
-# season21 = Season(2021, team_list)
-# print('====================================2021====================================')
-# season21.initialise_schedule()
-# season21.initialise_teams_elo()
 
-# for team in team_list:
-#     team.add_season_schedule(season21)
 
-# gsw: Team = season21.get_team_abbreviation('GSW')
 
-# elos = list()
 
-# for team in team_list:
-#     x = dict()
-#     x['TEAM_NAME'] = team.name
-#     x['Elo'] = team.elo.elo
 
-#     elos.append(x)
+curr_time = time.time()
+team_list = create_teams()
+season21 = Season(2021, team_list)
+print('====================================2021====================================')
+season21.initialise_schedule()
+season21.initialise_teams_elo()
 
-# elo_standings = sorted(elos, key=lambda d: d['Elo'], reverse=True)
+for team in team_list:
+    team.add_season_schedule(season21)
 
-# print()
-# print('====Elo Standings====')
-# for team in elo_standings:
-#     print(team['TEAM_NAME'] + ': ' + str(team['Elo']))
+gsw: Team = season21.get_team_abbreviation('GSW')
 
-# print()
+elos = list()
 
-# print('====================================2022====================================')
+for team in team_list:
+    x = dict()
+    x['TEAM_NAME'] = team.name
+    x['Elo'] = team.elo.elo
 
-# sesaon22 = Season(2022, team_list)
-# sesaon22.initialise_schedule()
-# sesaon22.initialise_teams_elo()
+    elos.append(x)
 
-# for team in team_list:
-#     team.add_season_schedule(sesaon22)
+elo_standings = sorted(elos, key=lambda d: d['Elo'], reverse=True)
 
-# elos = list()
+print()
+print('====Elo Standings====')
+for team in elo_standings:
+    print(team['TEAM_NAME'] + ': ' + str(team['Elo']))
 
-# for team in team_list:
-#     x = dict()
-#     x['TEAM_NAME'] = team.name
-#     x['Elo'] = team.elo.elo
+print()
 
-#     elos.append(x)
+print('====================================2022====================================')
 
-# elo_standings = sorted(elos, key=lambda d: d['Elo'], reverse=True)
+sesaon22 = Season(2022, team_list)
+sesaon22.initialise_schedule()
+sesaon22.initialise_teams_elo()
 
-# print()
-# print('====Elo Standings====')
-# for team in elo_standings:
-#     print(team['TEAM_NAME'] + ': ' + str(team['Elo']))
+for team in team_list:
+    team.add_season_schedule(sesaon22)
 
-# print()
-# print('Execution time: ' + str(time.time() - curr_time))
+elos = list()
+
+for team in team_list:
+    x = dict()
+    x['TEAM_NAME'] = team.name
+    x['Elo'] = team.elo.elo
+
+    elos.append(x)
+
+elo_standings = sorted(elos, key=lambda d: d['Elo'], reverse=True)
+
+print()
+print('====Elo Standings====')
+for team in elo_standings:
+    print(team['TEAM_NAME'] + ': ' + str(team['Elo']))
+
+print(sesaon22.schedule.games)
+
+print('Execution time: ' + str(time.time() - curr_time))

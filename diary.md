@@ -335,3 +335,27 @@ I tried to organise my testing suite and my current code by separating the code 
 Not sure how I spent two hours but I was only able to get a static record(panda.Dataframe) of the playoff games in the 2022 season. Well I actually am sure of how. I spent time going back and forth from another short program that I wrote to take in lines of input, each line is a new element in an array, and at the end, print the array. Copy and paste the output from the program and paste it into the test file to create a static list to add to the Dataframe. I realise around a third of the way, that I could just easily just iterate over the columns and convert each column into a list to make it easier than using the useless program that I wrote. Going to be using this subset of the 2022 season to conduct my tests on. Decided to make it static instead of loading from the NBA api because of the case that the NBA api were to ever close, break, or something unforeseen were to happen. Hopefully these are the only static records I need for the tests because they were a pain the arse to copy and paste to and from.
 
 End: 11pm
+
+# 19/11/22
+
+I've realised that having a 174 static `DataFrame` is not really hopeful. Mainly because then it seems difficult to make modifications and checking those modifications in tests. So, I decided to take an even smaller subset of games. Now, it's only 2 games, or 4 entries, for each game type. Regular, playin, and playoffs makes the `DataFrame` equal to 24 entries. I think this is a really managable size that I can also hard code and check easily with. I've also started thinking about reducing the columns of `Schedule.games`. Mainly because having that many extra columns for a pretty large `DataFrame`, I think, seems like I'm adding unnecessary time added to run my program. I left all those extra stat columns in originally because I thought I would need them later on in other iterations, probably still do, but for the time being, it's just bloat. Besides, it wouldn't be too difficult to add them back anyways because I'm actually adding code to delete them in the first place, so it would easy to revert back. I removed all the unnecessary columns and now it looks like this:
+
+```
+Schedule.games.columns = [
+  'GAME_NUM',
+  'TEAM_ABBREVIATION',
+  'TEAM_NAME',
+  'GAME_ID',
+  'MATCHUP',
+  'WL',
+  'PLUS_MINUS',
+  'GAME_TYPE',
+  'LOCATION'
+]
+```
+
+I added a new python file to hold the static data that my tests can call on to get. The new file is `static_game_logs.py`.
+
+I just found a case that needs to be accounted for when creating schedules. A game that is currently live is returned by `leaguegamelog`. Though the fix is easy enough with the fact the the `WL` column remains empty til the game is completed and updated.
+
+Noticed that my `test_game_logs` don't include `GAME_NUM` as the index. To further make the problem a bit more annoying, `GAME_NUM` is the accumulation of the regular season to the playoffs. So, to get the correct `GAME_NUM`, I'll have to call `leaguegamelog` again and get all the games and calculate the `GAME_NUM`. But I'll do that some other time.
