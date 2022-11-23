@@ -359,3 +359,13 @@ I added a new python file to hold the static data that my tests can call on to g
 I just found a case that needs to be accounted for when creating schedules. A game that is currently live is returned by `leaguegamelog`. Though the fix is easy enough with the fact the the `WL` column remains empty til the game is completed and updated.
 
 Noticed that my `test_game_logs` don't include `GAME_NUM` as the index. To further make the problem a bit more annoying, `GAME_NUM` is the accumulation of the regular season to the playoffs. So, to get the correct `GAME_NUM`, I'll have to call `leaguegamelog` again and get all the games and calculate the `GAME_NUM`. But I'll do that some other time.
+
+# 23/11/22
+
+Start: 8:30pm
+
+Removed uneccessary code from `elo_system.py`.
+
+Revisited some coding concepts related to OOP. I've realised that my code has low cohesion because some, if not all, of my classes have methods not relating to the class. Going to have to refactor more code later.
+
+End: 9:15
