@@ -69,8 +69,6 @@ class SeasonSchedule(Schedule): # Created this class simply for readability
         games.drop(columns=['VIDEO_AVAILABLE'], inplace=True)
         games['LOCATION'] = np.where(games['MATCHUP'].str.contains('vs.'), 'Home', 'Away')
 
-        # Want to reorder the columns but not really bothered to do it just to swap GAME_TYPE and LOCATION
-
         for i in range(0, len(games.index), 2):
             self.add_games(pd.concat([games.iloc[[i]], games.iloc[[i+1]]]).reset_index(drop=True))
         
@@ -92,11 +90,8 @@ class SeasonSchedule(Schedule): # Created this class simply for readability
 
         set_col = set(self.games.columns.tolist())
         set_keepers = set(keepers)
-
         remove = set_col - (set_col & set_keepers)
-
         self.games.drop(columns=remove, inplace=True)
-
         self.games = self.games.dropna()
 
     def get_team_schedule(self, team_abbr) -> pd.DataFrame:
@@ -113,6 +108,12 @@ class TeamSchedule(Schedule):
 
     def get_game(self, game_num) -> pd.DataFrame:
         return self.games[self.games.index == game_num]
+    
+    # For a specific team, add all games from a schedule
+    def add_season_schedule(self, team_abbreviation, schedule) -> None:
+        season_games = schedule.get_team_schedule(team_abbreviation)
+        season_games = season_games.reset_index(drop=True)
+        self.add_games(season_games)
 
 class Elo():
     home_adv = 100
@@ -122,6 +123,9 @@ class Elo():
 
     def __init__(self) -> None:
         self.elo = 1500
+    
+    def __repr__(self) -> str:
+        return str(self.elo)
 
     def win_expectancy_calc(self, OPPRo: int, location: str) -> int:
         if location == 'Home':
@@ -136,7 +140,7 @@ class Elo():
     def w_calc(self, outcome):
         return 1 if outcome == 'W' else 0
 
-    def elo_calc(self, win: str, OPPRo: int, game_location: str, mov):
+    def calculate_elo(self, win: str, OPPRo: int, game_location: str, mov):
         self.elo = self.elo + self.k * mov * (self.w_calc(win) - self.win_expectancy_calc(OPPRo, game_location))
     
     def carry_over(self):
@@ -202,8 +206,8 @@ class Season():
                 mov = team_b.elo.margin_of_victory(games.iloc[i+1]['PLUS_MINUS'], team_a.elo.elo, games.iloc[i+1]['LOCATION'])
 
             old_team_a_elo = team_a.elo.elo
-            team_a.calculate_elo(team_b.elo.elo, games.iloc[i], mov)
-            team_b.calculate_elo(old_team_a_elo, games.iloc[i+1], mov)
+            team_a.elo.calculate_elo(games.iloc[i]['WL'], team_b.elo.elo, games.iloc[i]['LOCATION'], mov)
+            team_b.elo.calculate_elo(games.iloc[i]['WL'], old_team_a_elo, games.iloc[i]['LOCATION'], mov)
 
             if games.iloc[i]['GAME_TYPE'] == 'Finals':
                 print(team_a.name + ': ' + str(team_a.elo.elo))
@@ -221,18 +225,4 @@ class Team():
         self.schedule = TeamSchedule()
 
     def __repr__(self) -> str:
-        return self.name
-        
-    def add_to_schedule(self, games):
-        self.schedule.add_games(games)
-
-    def add_season_schedule(self, season: Season):
-        season_games = season.schedule.get_team_schedule(self.abbreviation)
-        season_games = season_games.reset_index(drop=True)
-        self.schedule.add_games(season_games)
-    
-    def calculate_elo(self, opp_team_elo: int, game: pd.Series, mov):
-        self.elo.elo_calc(game['WL'], opp_team_elo, game['LOCATION'], mov)
-    
-    def calculate_elo_carry_over(self):
-        self.elo.carry_over()
+        return self.name + ': ' + self.elo
