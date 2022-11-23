@@ -16,17 +16,6 @@ A few helper functions just to shorten the length of code to make it easier to r
 def get_games(season, type) -> pd.DataFrame:
     return leaguegamelog.LeagueGameLog(season=season, season_type_all_star=type).get_data_frames()[0]
 
-def get_games_default(type) -> pd.DataFrame:
-    return leaguegamelog.LeagueGameLog(season_type_all_star=type).get_data_frames()[0]
-
-def create_teams():
-    team_list = list()
-
-    for team in teams.get_teams():
-        team_list.append(Team(team['full_name'], team['abbreviation']))
-    
-    return team_list
-
 '''
 Deciding to keep the original type(pd.DataFrame) returned from the nba api because the methods that come with
 are great and I might even use some more later down the line. Of course, I still might change it later.
@@ -162,10 +151,12 @@ class Elo():
         return ((margin + 3)**0.8) / (7.5 + 0.006 * (self.elo - OPPRo + (is_home*self.home_adv)))
 
 class Season():
-    seasons = list()                # Keep track of all seasons. Maybe move to own class?
+    # Keep track of all seasons. Maybe move to own class?
+    seasons = list()
 
     def __init__(self, year, teams=[]) -> None:
-        self.year = year        # Year is an int of the year the season started. Might change later
+        # Year is an int of the year the season started. Might change later
+        self.year = year            
         self.schedule = SeasonSchedule()
 
         if len(self.seasons) > 0:
@@ -204,7 +195,7 @@ class Season():
             team_a: Team = self.get_team_abbreviation(games.iloc[i]['TEAM_ABBREVIATION'])
             team_b: Team = self.get_team_abbreviation(games.iloc[i+1]['TEAM_ABBREVIATION'])
 
-            # calculate the margin of victory (mov)
+            # calculate the margin of victory (MOV)
             if games.iloc[i]['PLUS_MINUS'] > 0:
                 mov = team_a.elo.margin_of_victory(games.iloc[i]['PLUS_MINUS'], team_b.elo.elo, games.iloc[i]['LOCATION'])
             else:
@@ -245,98 +236,3 @@ class Team():
     
     def calculate_elo_carry_over(self):
         self.elo.carry_over()
-
-
-# team_list = []
-
-# time_now = time.time()
-# for team in teams.teams:
-#     x = Team(team[1])
-#     x.create_schedule()
-#     team_list.append(x)
-
-# print(time.time() - time_now)
-# print(team_list)
-# print(len(team_list))
-
-# team = Team('GSW')
-
-# playoff_games_hist = get_games(2021, 'Playoffs')
-# playoff_games_hist = playoff_games_hist[playoff_games_hist['TEAM_ABBREVIATION'] == 'GSW']
-# sorted_playoff_games_hist = playoff_games_hist.sort_values(by=['GAME_ID'])
-# sorted_playoff_games_hist = sorted_playoff_games_hist.reset_index(drop=True).get(['GAME_DATE', 'MATCHUP', 'GAME_ID', 'TEAM_ID'])
-# # print(sorted_playoff_games_hist)
-
-# all_series = commonplayoffseries.CommonPlayoffSeries(season=2021).get_data_frames()[0]
-
-# playoff_games_hist['SERIES_ID'] = all_series['SERIES_ID']
-
-# for playoff_game in all_series.to_dict('records'):
-    
-#     if int(playoff_game['SERIES_ID']) // 10**1 % 10 == 1:
-#         print('is first round game')
-#         print(playoff_game['SERIES_ID'])
-
-
-
-
-
-
-curr_time = time.time()
-team_list = create_teams()
-season21 = Season(2021, team_list)
-print('====================================2021====================================')
-season21.initialise_schedule()
-season21.initialise_teams_elo()
-
-for team in team_list:
-    team.add_season_schedule(season21)
-
-gsw: Team = season21.get_team_abbreviation('GSW')
-
-elos = list()
-
-for team in team_list:
-    x = dict()
-    x['TEAM_NAME'] = team.name
-    x['Elo'] = team.elo.elo
-
-    elos.append(x)
-
-elo_standings = sorted(elos, key=lambda d: d['Elo'], reverse=True)
-
-print()
-print('====Elo Standings====')
-for team in elo_standings:
-    print(team['TEAM_NAME'] + ': ' + str(team['Elo']))
-
-print()
-
-print('====================================2022====================================')
-
-sesaon22 = Season(2022, team_list)
-sesaon22.initialise_schedule()
-sesaon22.initialise_teams_elo()
-
-for team in team_list:
-    team.add_season_schedule(sesaon22)
-
-elos = list()
-
-for team in team_list:
-    x = dict()
-    x['TEAM_NAME'] = team.name
-    x['Elo'] = team.elo.elo
-
-    elos.append(x)
-
-elo_standings = sorted(elos, key=lambda d: d['Elo'], reverse=True)
-
-print()
-print('====Elo Standings====')
-for team in elo_standings:
-    print(team['TEAM_NAME'] + ': ' + str(team['Elo']))
-
-print(sesaon22.schedule.games)
-
-print('Execution time: ' + str(time.time() - curr_time))
