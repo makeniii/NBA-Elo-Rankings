@@ -74,6 +74,7 @@ test_game_logs['LOCATION'] = location
 
 keepers = [
     'TEAM_ABBREVIATION',
+    'TEAM_NAME',
     'GAME_ID',
     'MATCHUP',
     'WL',
