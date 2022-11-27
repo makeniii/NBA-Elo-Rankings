@@ -386,4 +386,6 @@ I found two bugs in my code just from these four tests. They were easily fixed t
 
 Moved a few functions around to different class to improve cohesion, I think. And with that, I have my second iteration of my class diagram done.
 
+![second class diagram 21_11_22 drawio](https://user-images.githubusercontent.com/117491084/204128074-55b6b1d3-aa16-4e00-a001-95bc67b7fb89.png)
+
 End: 8:00pm
