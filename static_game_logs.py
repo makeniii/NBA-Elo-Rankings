@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import elo_system
 from nba_api.stats.endpoints import leaguegamelog
 
 '''
@@ -73,6 +74,7 @@ test_game_logs['GAME_TYPE'] = game_type
 test_game_logs['LOCATION'] = location
 
 keepers = [
+    'SEASON_ID',
     'TEAM_ABBREVIATION',
     'TEAM_NAME',
     'GAME_ID',
@@ -88,3 +90,9 @@ set_keepers = set(keepers)
 remove = set_col - (set_col & set_keepers)
 
 test_game_logs.drop(columns=remove, inplace=True)
+
+dummy_season_schedule = elo_system.SeasonSchedule()
+dummy_season_schedule.add_games(test_game_logs)
+
+season_schedule = elo_system.SeasonSchedule()
+season_schedule.initialise('2021')

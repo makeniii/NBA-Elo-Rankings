@@ -29,18 +29,22 @@ class Schedule():
 
     def add_games(self, games) -> None:
         self.games = pd.concat([self.games, games]).reset_index(drop=True)
+        self.games['GAME_NUM'] = pd.factorize(self.games['GAME_ID'])[0] + 1
+        self.games = self.games.set_index('GAME_NUM')
+
+    def get_game(self, game_num) -> pd.DataFrame:
+        return self.games[self.games.index == game_num]
     
-class SeasonSchedule(Schedule): # Created this class simply for readability
+class SeasonSchedule(Schedule):
     def __init__(self) -> None:
         super().__init__()
 
+    # Initialise the schedule by storing all games in given season up to current date
     def initialise(self, year):
         games = get_games(year, 'Regular Season')
         games = games.sort_values(by=['GAME_ID']).reset_index(drop=True)
         games['GAME_TYPE'] = 'Regular Season'
-
         playin_games = get_games(year, 'PlayIn')
-        playin_games.drop(columns=['VIDEO_AVAILABLE'], inplace=True)
 
         if not playin_games.empty:
             playin_games['GAME_TYPE'] = 'PlayIn'
@@ -66,18 +70,16 @@ class SeasonSchedule(Schedule): # Created this class simply for readability
             playoff_games['GAME_TYPE'] = np.select(conditions, choices, default='NOT FOUND')
             games = pd.concat([games, playoff_games])
         
-        games.drop(columns=['VIDEO_AVAILABLE'], inplace=True)
         games['LOCATION'] = np.where(games['MATCHUP'].str.contains('vs.'), 'Home', 'Away')
 
         for i in range(0, len(games.index), 2):
             self.add_games(pd.concat([games.iloc[[i]], games.iloc[[i+1]]]).reset_index(drop=True))
         
-        self.games['GAME_NUM'] = pd.factorize(self.games['GAME_ID'])[0] + 1
-        self.games = self.games.set_index('GAME_NUM')
         self.games = self.games.sort_index(ascending=True)
 
         # Remove columns that aren't used... (yet)
         keepers = [
+            'SEASON_ID',
             'TEAM_ABBREVIATION',
             'TEAM_NAME',
             'GAME_ID',
@@ -92,28 +94,17 @@ class SeasonSchedule(Schedule): # Created this class simply for readability
         set_keepers = set(keepers)
         remove = set_col - (set_col & set_keepers)
         self.games.drop(columns=remove, inplace=True)
+
+        # leaguegamelog also includes games that are ongoing
+        # so remove current ongoning games that don't have fully filled columns
         self.games = self.games.dropna()
 
-    def get_team_schedule(self, team_abbr) -> pd.DataFrame:
-        return self.games[self.games.MATCHUP.str.contains(team_abbr)]
+    def get_team_schedule(self, team_abbreviation) -> pd.DataFrame:
+        return self.games[self.games.MATCHUP.str.contains(team_abbreviation)]
 
 class TeamSchedule(Schedule):
     def __init__(self) -> None:
         super().__init__()
-
-    def add_games(self, games) -> None:
-        super().add_games(games)
-        self.games['GAME_NUM'] = pd.factorize(self.games['GAME_ID'])[0] + 1
-        self.games = self.games.set_index('GAME_NUM')
-
-    def get_game(self, game_num) -> pd.DataFrame:
-        return self.games[self.games.index == game_num]
-    
-    # For a specific team, add all games from a schedule
-    def add_season_schedule(self, team_abbreviation, schedule) -> None:
-        season_games = schedule.get_team_schedule(team_abbreviation)
-        season_games = season_games.reset_index(drop=True)
-        self.add_games(season_games)
 
 class Elo():
     home_adv = 100
@@ -140,8 +131,8 @@ class Elo():
     def w_calc(self, outcome):
         return 1 if outcome == 'W' else 0
 
-    def calculate_elo(self, win: str, OPPRo: int, game_location: str, mov):
-        self.elo = self.elo + self.k * mov * (self.w_calc(win) - self.win_expectancy_calc(OPPRo, game_location))
+    def calculate_elo(self, win: str, OPPRo: int, location: str, mov):
+        self.elo = self.elo + self.k * mov * (self.w_calc(win) - self.win_expectancy_calc(OPPRo, location))
     
     def carry_over(self):
         self.elo = (.75 * self.elo) + (.25 * self.elo_avg)
@@ -172,9 +163,6 @@ class Season():
             raise Exception("There are no teams to create season")
 
         self.teams = teams
-    
-    def initialise_schedule(self):
-        self.schedule.initialise(self.year)
 
     def get_team(self, team_name):
         for team in self.teams:
@@ -190,14 +178,13 @@ class Season():
         
         raise Exception('get_team_abbreviation(' + team_abbreviation + '): Team not found')
 
-    def initialise_teams_elo(self):
-        # For each game (x1323):
+    def initialise_team_elos(self):
         games = self.schedule.games
 
         for i in range(0, len(games), 2):
             # For each team (x2)
-            team_a: Team = self.get_team_abbreviation(games.iloc[i]['TEAM_ABBREVIATION'])
-            team_b: Team = self.get_team_abbreviation(games.iloc[i+1]['TEAM_ABBREVIATION'])
+            team_a: Team = self.get_team(games.iloc[i]['TEAM_NAME'])
+            team_b: Team = self.get_team(games.iloc[i+1]['TEAM_NAME'])
 
             # calculate the margin of victory (MOV)
             if games.iloc[i]['PLUS_MINUS'] > 0:
@@ -205,13 +192,16 @@ class Season():
             else:
                 mov = team_b.elo.margin_of_victory(games.iloc[i+1]['PLUS_MINUS'], team_a.elo.elo, games.iloc[i+1]['LOCATION'])
 
+            # calculate new elo rating
             old_team_a_elo = team_a.elo.elo
             team_a.elo.calculate_elo(games.iloc[i]['WL'], team_b.elo.elo, games.iloc[i]['LOCATION'], mov)
             team_b.elo.calculate_elo(games.iloc[i]['WL'], old_team_a_elo, games.iloc[i]['LOCATION'], mov)
 
-            if games.iloc[i]['GAME_TYPE'] == 'Finals':
-                print(team_a.name + ': ' + str(team_a.elo.elo))
-                print(team_b.name + ': ' + str(team_b.elo.elo))
+    def initialise_team_schedules(self):
+        for team in self.teams:
+            season_games = self.schedule.get_team_schedule(team.team_abbreviation)
+            season_games = season_games.reset_index(drop=True)
+            team.schedule.add_games(season_games)
     
     def end_season(self):
         for team in self.teams:
