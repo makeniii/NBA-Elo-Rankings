@@ -369,3 +369,21 @@ Removed uneccessary code from `elo_system.py`.
 Revisited some coding concepts related to OOP. I've realised that my code has low cohesion because some, if not all, of my classes have methods not relating to the class. Going to have to refactor more code later.
 
 End: 9:15
+
+# 27/11/22
+
+Start: 5:00pm
+
+I wrote test cases for `SeasonSchedule.initialise` and I think they're all that's needed. I could write more relating to the data but since I use `leaguegamelog` to get the data and I only trim them. I don't think I need to write cases for the data since it is an outside source. Also, I've realised that I can modify `SeasonSchedule.initialise` function parameters to take in a `DataFrame` instead of a `year: String` so that it's easier to test because I'm not calling `leaguegamelog`. That means I can use a subset of games to call `SeasonSchedule.initialise` with so that testing times are shorter.
+
+So anyways, I only wrote a test case concerning:
+- The columns. Since I trim and add new columns.
+- Data in the index column. Since I create and use that as the index.
+- Data in the game type column. Again, since I create the column and populate it.
+- Finally, data in the location column. Again, same thing as above.
+
+I found two bugs in my code just from these four tests. They were easily fixed though.
+
+Moved a few functions around to different class to improve cohesion, I think. And with that, I have my second iteration of my class diagram done.
+
+End: 8:00pm
