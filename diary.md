@@ -389,3 +389,9 @@ Moved a few functions around to different class to improve cohesion, I think. An
 ![second class diagram 21_11_22 drawio](https://user-images.githubusercontent.com/117491084/204128074-55b6b1d3-aa16-4e00-a001-95bc67b7fb89.png)
 
 End: 8:00pm
+
+# 28/11/22
+
+I didn't get to write any code but I did do a tiny bit of research.
+
+I had an idea that I should look into .NET. Now, before this I had no idea of what it was. I thought it was a programming language because I would constantly see it listed as a requirement on job posts about the relevant experience needed for software related jobs. After watching a video, found out that it's actually a framework where you can more easily deploy applications because of the inbuilt functionalities. Now, why is this important to my project? I had a thought that I might actually try to implement this current project using the .NET framework. I'm thinking about getting my feet wet with using C# or any other langauge that's needed to develop the web application. I'm going to be giving it a go translating my current python code to C# in the .NET framework once I complete all the tests (complete this iteration). Once I move all the python code to the .NET framework, I'll be assessing how easy it to use the framework because at the end of the day, I don't want to spend too much time wasting away with this. But... at the same time, this might be very beneficial if I am able to learn this. Guess I'll see how it goes. The video I watched showed some C# code and it looks pretty similar to C++ syntax so I hope it's a smooth transition if I do go that route.
