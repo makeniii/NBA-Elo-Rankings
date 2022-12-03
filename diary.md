@@ -306,7 +306,7 @@ I took [FiveThirtyEight's](https://fivethirtyeight.com/features/how-we-calculate
 
 So, now that the margin of victory is implemented, that means that the formula has now changed to accomodate this change. The formula now is:
 
-$$\text{R}_n=\text{R}_o+\text{K}\times\text{MOV}\times\left(\text{W}-\frac{1}{10^{-\frac{\text{RDiff}+(\text{R}_o\times0.1)}{x}}+1}\right)$$
+$$\text{R}_n=\text{R}_o+\text{K}\times\text{MOV}\times\left(\text{W}-\frac{1}{10^{-\frac{\text{RDiff}+\text{HomeAdv}}{x}}+1}\right)$$
 
 I've finally deleted the `Game` class and it's subclasses. It'll be easy to re-do if I need to so nothing is really lost.
 
@@ -390,7 +390,7 @@ Moved a few functions around to different class to improve cohesion, I think. An
 
 End: 8:00pm
 
-# 28/11/22
+# 29/11/22
 
 I didn't get to write any code but I did do a tiny bit of research.
 
@@ -400,3 +400,100 @@ Back to tests. I said this yesterday.
 > I could write more relating to the data but since I use `leaguegamelog` to get the data and I only trim them. I don't think I need to write cases for the data since it is an outside source.
 
 After thinking about a bit, I'm going to write a test for the `DataFrame` that's returned from using `leaguegamelog`. At first, I just thought about testing the actual data itself for a whole season and thinking how time consuming that would be to copy and paste all that information into `static_game_logs.py`. But in reality, I can just use a single game to do this because it's able to test the format of the columns and the values of the columns so that it's always what I'm expecting.
+
+# 3/12/22
+
+Completed the tests for the `SeasonSchedule` class but I've also made some changes to the class and parent class, `Schedule`.
+
+First, the biggest change I made to `Schedule` was that I changed it to an abstract class. Since python doesn't heavily focus on OOP, I thought that it won't have abstract classes. But, it did. So, I'm able to use `ABC` and `abstractmethod` from the `abc` module to define my abstract classes with to make sure I can't instantiate abstract classes. At first, I didn't have an abstract method in `Schedule` because I saw no need for it since I didn't need it. However, this meant that I was able to do this:
+```
+from abc import ABC
+
+Schedule(ABC):
+  def add_games():
+    pass
+  
+  def get_game():
+    pass
+  
+foo = Schedule()
+```
+This code will run fine because `ABC` does not define this example `Schedule` class as an abstract class.
+
+According to the [docs](https://docs.python.org/3.9/library/abc.html#abc.abstractmethod):
+> A class that has a metaclass derived from ABCMeta cannot be instantiated unless all of its abstract methods and properties are overridden.
+
+As a quick note if there's any confusion about what `ABCMeta` that was just mentioned. `ABC` implicitly defines `ABCMeta` for us and makes code easier to read. From the [docs](https://docs.python.org/3.9/library/abc.html#abc.ABC):
+
+> ```
+> from abc import ABCMeta
+>
+>   class MyABC(metaclass=ABCMeta):
+>     pass
+> ```
+
+So, back to abstract classes and `Schedule`. I could have no abstract methods and just use `ABC` to signify that it's an abstract class but that bothers me a bit. So, I added the following:
+```
+import pandas as pd
+from abc import ABC, abstractmethod
+
+Schedule(ABC):
+  @abstractmethod
+  def __init__(self) -> None:
+    self.games = pd.Dataframe()
+
+SeasonSchedule(Schedule):
+  def __init__(self) -> None:
+        super().__init__()
+```
+
+Now, when I try to do the following:
+```
+foo = Schedule()
+```
+
+It returns:
+```
+TypeError: Can't instantiate abstract class Schedule with abstract method __init__
+```
+
+Not perfect but the only simple workaround I found. Since I've changed `Schedule`, I'll have to remember to update the class diagram.
+
+Another *major* change, I guess, is that I added a class variable `teams` that keeps track of all current NBA teams. Since both `Season` and `Team` have a list of `self` objects, I've thought about adding an `NBA` class that instead keeps track of all `Season` and `Team` objects but I kinda don't see why I should add extras for no reason when it's still fine to me. So, I've decided not to. Also, added a static method to both `Team` and `Season`. They both just search their respective class variable list for the given variable. For example, getting the `Team` object given a team name or getting the `Season` object given a year. Speaking of the `Season` class, I added a global variable `get_both_games` that decides how `SeasonSchedule.get_team_schedule()` behaves. Before it was:
+```
+SeasonSchedule(Foo):
+  def get_team_schedule(team_abbreviation) -> pd.DataFrame:
+    return self.games[self.games.MATCHUP.str.contains(team_abbreviation)]
+
+Season():
+  def initialise_team_schedules():
+  ...
+    season_games = self.schedule.get_team_schedule(team_abbreviation)
+  ...
+  team.schedule.add_games(season_games)
+```
+And now:
+```
+def get_team_schedule(self, team_name) -> pd.DataFrame:
+  if get_both_games:
+    return self.games[self.games.MATCHUP.str.contains(team_name)]
+  else:            
+    return self.games[self.games.TEAM_NAME == team_name]
+
+Season():
+  def initialise_team_schedules():
+  ...
+    if get_both_games:
+      season_games = self.schedule.get_team_schedule(team.abbreviation)
+    else:
+      season_games = self.schedule.get_team_schedule(team.name)
+  ...
+  team.schedule.add_games(season_games)
+```
+Basically, I can toggle between using the team's abbreviation or the team name. But the biggest difference is that using only the team name means that `Team.schedule` will only contain one entry per `GAME_ID` instead of two. `Team.schedule` will no longer store the oppositions game stats and now will have to use `GAME_ID` to find the oppositions stats from `Sesaon.schedule`. As of right now, `get_both_games = False`.
+
+Finally, did refactor `Elo` a bit by adding a helper function as to not repeat code. Nothing major or even minor really.
+
+I've also completed the tests for `Elo` and something I should *probably* do is add some graphs that visualise some/all of my math functions in `Elo`. I could then easier visualise how the probability of winning changes depending on $\text{RDiff}$, $\text{K}$, and so on. But again, that's just something to do on the side maybe.
+
+Now I only have `Season` to write tests for since `Team` doesn't have anything that I would need to test for.

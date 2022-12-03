@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import elo_system
 from nba_api.stats.endpoints import leaguegamelog
+from nba_api.stats.static import teams as team_list
 
 '''
 This file contains game logs from the entire 2022 playoffs. I will be using this to test my backend functions.
@@ -91,8 +92,21 @@ remove = set_col - (set_col & set_keepers)
 
 test_game_logs.drop(columns=remove, inplace=True)
 
-dummy_season_schedule = elo_system.SeasonSchedule()
-dummy_season_schedule.add_games(test_game_logs)
+dummy_SeasonSchedule = elo_system.SeasonSchedule()
+dummy_SeasonSchedule.add_games(test_game_logs)
 
-season_schedule = elo_system.SeasonSchedule()
-season_schedule.initialise('2021')
+SeasonSchedule = elo_system.SeasonSchedule()
+SeasonSchedule.initialise('2021')
+
+Teams = list()
+
+for team in team_list.get_teams():
+    Teams.append(elo_system.Team(team['full_name'], team['abbreviation']))
+
+Season21 = elo_system.Season(2021, Teams)
+
+Season21.schedule = SeasonSchedule
+
+Season21.initialise_team_schedules()
+
+bug_class = elo_system.Schedule()

@@ -1,14 +1,12 @@
 from nba_api.stats.endpoints import teamgamelog
-from nba_api.stats.static import teams
 from nba_api.live.nba.endpoints import boxscore
 from nba_api.stats.endpoints import leaguegamelog
 from nba_api.stats.endpoints import commonplayoffseries
 import pandas as pd
 import numpy as np
-import datetime
-import math
-import time
-from typing import List
+from abc import ABC, abstractmethod
+
+get_both_games = False
 
 '''
 A few helper functions just to shorten the length of code to make it easier to read
@@ -20,14 +18,15 @@ def get_games(season, type) -> pd.DataFrame:
 Deciding to keep the original type(pd.DataFrame) returned from the nba api because the methods that come with
 are great and I might even use some more later down the line. Of course, I still might change it later.
 '''
-class Schedule():
+class Schedule(ABC):
+    @abstractmethod
     def __init__(self) -> None:
         self.games = pd.DataFrame() 
 
     def __str__(self) -> str:
         return str(self.games)
 
-    def add_games(self, games) -> None:
+    def add_games(self, games: pd.DataFrame) -> None:
         self.games = pd.concat([self.games, games]).reset_index(drop=True)
         self.games['GAME_NUM'] = pd.factorize(self.games['GAME_ID'])[0] + 1
         self.games = self.games.set_index('GAME_NUM')
@@ -99,8 +98,11 @@ class SeasonSchedule(Schedule):
         # so remove current ongoning games that don't have fully filled columns
         self.games = self.games.dropna()
 
-    def get_team_schedule(self, team_abbreviation) -> pd.DataFrame:
-        return self.games[self.games.MATCHUP.str.contains(team_abbreviation)]
+    def get_team_schedule(self, team_name) -> pd.DataFrame:
+        if get_both_games:
+            return self.games[self.games.MATCHUP.str.contains(team_name)]
+        else:            
+            return self.games[self.games.TEAM_NAME == team_name]
 
 class TeamSchedule(Schedule):
     def __init__(self) -> None:
@@ -119,31 +121,29 @@ class Elo():
         return str(self.elo)
 
     def win_expectancy_calc(self, OPPRo: int, location: str) -> int:
-        if location == 'Home':
-            is_home = 1
-        else:
-            is_home = -1
-
-        return 1 / (10**(-((self.elo - OPPRo) + (is_home*self.home_adv)) / self.x) + 1)
+        return 1 / (10**(-((self.elo - OPPRo) + (self.home_adv_calc(location)*self.home_adv)) / self.x) + 1)
 
     # only using 1 or 0 because I have to get game data to see if the game went to OT. 
     # Will do in a later iteration
     def w_calc(self, outcome):
         return 1 if outcome == 'W' else 0
 
-    def calculate_elo(self, win: str, OPPRo: int, location: str, mov):
-        self.elo = self.elo + self.k * mov * (self.w_calc(win) - self.win_expectancy_calc(OPPRo, location))
+    def calculate_elo(self, win: str, OPPRo: int, location: str, mov:int):
+        self.elo =  round(
+                    self.elo + 
+                    self.k * 
+                    mov * 
+                    (self.w_calc(win) - self.win_expectancy_calc(OPPRo, location))
+                    )
     
     def carry_over(self):
         self.elo = (.75 * self.elo) + (.25 * self.elo_avg)
     
     def margin_of_victory(self, margin, OPPRo, location):
-        if location == 'Home':
-            is_home = 1
-        else:
-            is_home = -1
+        return ((margin + 3)**0.8) / (7.5 + 0.006 * (self.elo - OPPRo + (self.home_adv_calc(location)*self.home_adv)))
 
-        return ((margin + 3)**0.8) / (7.5 + 0.006 * (self.elo - OPPRo + (is_home*self.home_adv)))
+    def home_adv_calc(self, location: str) -> int:
+        return 1 if location == 'Home' else -1
 
 class Season():
     # Keep track of all seasons. Maybe move to own class?
@@ -199,7 +199,10 @@ class Season():
 
     def initialise_team_schedules(self):
         for team in self.teams:
-            season_games = self.schedule.get_team_schedule(team.team_abbreviation)
+            if get_both_games:
+                season_games = self.schedule.get_team_schedule(team.abbreviation)
+            else:
+                season_games = self.schedule.get_team_schedule(team.name)
             season_games = season_games.reset_index(drop=True)
             team.schedule.add_games(season_games)
     
@@ -207,12 +210,32 @@ class Season():
         for team in self.teams:
             team.calculate_elo_carry_over()
 
+    @staticmethod
+    def get_season(year: int):
+        for season in Season.seasons:
+            if year == season.year:
+                return season
+        
+        raise Exception('No ' + str(year) + ' season')
+
 class Team():
+    teams = list()
+
     def __init__(self, name, abbreviation) -> None:
         self.name = name
         self.abbreviation = abbreviation
         self.elo = Elo()
         self.schedule = TeamSchedule()
 
+        Team.teams.append(self)
+
     def __repr__(self) -> str:
         return self.name + ': ' + self.elo
+
+    @staticmethod
+    def get_team(team_name: str):
+        for team in Team.teams:
+            if team_name == team.name:
+                return team
+        
+        raise Exception('No team named: ' + team_name)
