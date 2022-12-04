@@ -19,25 +19,20 @@ Deciding to keep the original type(pd.DataFrame) returned from the nba api becau
 are great and I might even use some more later down the line. Of course, I still might change it later.
 '''
 class Schedule(ABC):
-    @abstractmethod
     def __init__(self) -> None:
         self.games = pd.DataFrame() 
 
     def __str__(self) -> str:
         return str(self.games)
 
+    @abstractmethod
     def add_games(self, games: pd.DataFrame) -> None:
         self.games = pd.concat([self.games, games]).reset_index(drop=True)
-        self.games['GAME_NUM'] = pd.factorize(self.games['GAME_ID'])[0] + 1
-        self.games = self.games.set_index('GAME_NUM')
 
     def get_game(self, game_num) -> pd.DataFrame:
         return self.games[self.games.index == game_num]
     
 class SeasonSchedule(Schedule):
-    def __init__(self) -> None:
-        super().__init__()
-
     # Initialise the schedule by storing all games in given season up to current date
     def initialise(self, year):
         games = get_games(year, 'Regular Season')
@@ -103,10 +98,15 @@ class SeasonSchedule(Schedule):
             return self.games[self.games.MATCHUP.str.contains(team_name)]
         else:            
             return self.games[self.games.TEAM_NAME == team_name]
+    
+    def add_games(self, games: pd.DataFrame) -> None:
+        super().add_games(games)
+        self.games.index = pd.factorize(self.games['GAME_ID'])[0] + 1
 
 class TeamSchedule(Schedule):
-    def __init__(self) -> None:
-        super().__init__()
+    def add_games(self, games: pd.DataFrame) -> None:
+        super().add_games(games)
+        self.games.index += 1
 
 class Elo():
     home_adv = 100
@@ -120,29 +120,44 @@ class Elo():
     def __repr__(self) -> str:
         return str(self.elo)
 
-    def win_expectancy_calc(self, OPPRo: int, location: str) -> int:
-        return 1 / (10**(-((self.elo - OPPRo) + (self.home_adv_calc(location)*self.home_adv)) / self.x) + 1)
+    def carry_over(self):
+        self.elo = round((.75 * self.elo) + (.25 * self.elo_avg))
 
-    # only using 1 or 0 because I have to get game data to see if the game went to OT. 
-    # Will do in a later iteration
-    def w_calc(self, outcome):
+    def set_elo(self, Rn: int) -> None:
+        self.elo = Rn
+
+    def get_elo(self) -> int:
+        return self.elo
+    
+    def update_elo(self, total_change: int) -> None:
+        self.elo += total_change
+
+    @staticmethod
+    def win_expectancy_calc(Ro: int, OPPRo: int, location: str) -> int:
+        return 1 / (10**(-((Ro - OPPRo) + (Elo.home_adv_calc(location)*Elo.home_adv)) / Elo.x) + 1)
+
+    @staticmethod
+    def w_calc(outcome):
         return 1 if outcome == 'W' else 0
 
-    def calculate_elo(self, win: str, OPPRo: int, location: str, mov:int):
-        self.elo =  round(
-                    self.elo + 
-                    self.k * 
+    @staticmethod
+    def calculate_elo_change(Ro: int, outcome: str, OPPRo: int, location: str, mov:int):
+        return  round(
+                    Elo.k * 
                     mov * 
-                    (self.w_calc(win) - self.win_expectancy_calc(OPPRo, location))
+                    (Elo.w_calc(outcome) - Elo.win_expectancy_calc(Ro, OPPRo, location))
                     )
     
-    def carry_over(self):
-        self.elo = (.75 * self.elo) + (.25 * self.elo_avg)
-    
-    def margin_of_victory(self, margin, OPPRo, location):
-        return ((margin + 3)**0.8) / (7.5 + 0.006 * (self.elo - OPPRo + (self.home_adv_calc(location)*self.home_adv)))
+    @staticmethod
+    def calculate_elo(Ro: int, outcome: str, OPPRo: int, location: str, mov:int):
+        return Ro + Elo.calculate_elo_change(Ro, outcome, OPPRo, location, mov)
 
-    def home_adv_calc(self, location: str) -> int:
+    @staticmethod
+    def margin_of_victory(margin, RDiff, location):
+        return ((margin + 3)**0.8) / (7.5 + 0.006 * (RDiff + Elo.home_adv_calc(location)*Elo.home_adv))
+
+    @staticmethod
+    def home_adv_calc(location: str) -> int:
         return 1 if location == 'Home' else -1
 
 class Season():
@@ -182,20 +197,24 @@ class Season():
         games = self.schedule.games
 
         for i in range(0, len(games), 2):
-            # For each team (x2)
             team_a: Team = self.get_team(games.iloc[i]['TEAM_NAME'])
             team_b: Team = self.get_team(games.iloc[i+1]['TEAM_NAME'])
 
-            # calculate the margin of victory (MOV)
-            if games.iloc[i]['PLUS_MINUS'] > 0:
-                mov = team_a.elo.margin_of_victory(games.iloc[i]['PLUS_MINUS'], team_b.elo.elo, games.iloc[i]['LOCATION'])
+            # For each team (x2)
+            if games.iloc[i]['WL'] == 'W':
+                winner = 0
+                RDiff = team_a.elo.elo - team_b.elo.elo
             else:
-                mov = team_b.elo.margin_of_victory(games.iloc[i+1]['PLUS_MINUS'], team_a.elo.elo, games.iloc[i+1]['LOCATION'])
+                winner = 1
+                RDiff = team_b.elo.elo - team_a.elo.elo
+
+            # calculate the margin of victory (MOV)
+            mov = Elo.margin_of_victory(games.iloc[i+winner]['PLUS_MINUS'], RDiff, games.iloc[i+winner]['LOCATION'])
 
             # calculate new elo rating
-            old_team_a_elo = team_a.elo.elo
-            team_a.elo.calculate_elo(games.iloc[i]['WL'], team_b.elo.elo, games.iloc[i]['LOCATION'], mov)
-            team_b.elo.calculate_elo(games.iloc[i]['WL'], old_team_a_elo, games.iloc[i]['LOCATION'], mov)
+            team_a_elo_change = Elo.calculate_elo_change(team_a.elo.get_elo(), games.iloc[i]['WL'], team_b.elo.elo, games.iloc[i]['LOCATION'], mov)
+            team_a.elo.update_elo(team_a_elo_change)
+            team_b.elo.update_elo(-team_a_elo_change)
 
     def initialise_team_schedules(self):
         for team in self.teams:
@@ -208,7 +227,7 @@ class Season():
     
     def end_season(self):
         for team in self.teams:
-            team.calculate_elo_carry_over()
+            team.elo.carry_over()
 
     @staticmethod
     def get_season(year: int):
