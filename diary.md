@@ -513,13 +513,13 @@ This was what I thought $\text{W}$ should be set to before I started coding:
   \end{cases}
 $$
 
-Once I started coding, I figured that using a zero sum value is what actually makes sense because a losing team should lose as much rating as the winning team gains. Also removed the overtime value for simplicity. So, $\text{W}$ is now:
+I removed the overtime value for simplicity. So, $\text{W}$ is now:
 
 $$ 
 \text{W} =
   \begin{cases}
     \displaystyle 1 & \quad \text{a win} \\
-    \displaystyle -1 & \quad \text{a loss}
+    \displaystyle 0 & \quad \text{a loss}
   \end{cases}
 $$
 
@@ -541,3 +541,40 @@ Also, I've found [fivethiryeight's](https://fivethirtyeight.com/features/how-we-
 >Here’s the formula: Take the difference of the two teams’ Elo ratings, add 100 points for the home team and then divide by 28.
 
 This is something that I'm going to want to use for functions I have in mind down the line.
+
+Looks like I haven't explained what $\text{MOV}$ is either. Basically it's a multiplier for the margin of victory which is applied to both calculating the winning and losing team's Elo's. So $\text{MOV}$ is calculated from the winning team's side ($\text{Win}_{team}$). The formula is:
+
+$$
+\text{MOV} = \frac{(\text{Win}_{team}\text{Margin} + 3)^{0.8}}{7.5 + 0.006 \times (\text{Win}_{team}\text{R}_{o} - \text{Lose}_{team}\text{R}_{o} + \text{Win}_{team}\text{HomeAdv})}
+$$
+
+We can see how $\text{MOV}$ is used here:
+>$$\text{R}_n=\text{R}_o+\text{K}\times\text{MOV}\times\left(\text{W}-\frac{1}{10^{-\frac{\text{RDiff}+\text{HomeAdv}}{x}}+1}\right)$$
+
+So, $\text{Win}_{team}\text{R}_{n}$ and $\text{Lose}_{team}\text{R}_{n}$ both use the $\text{MOV}$ value in their calculations.
+
+Something that I got confused about is that when calculating $\text{MOV}$, I have to calculate `RDiff` of the winner. If I had explained earlier what $\text{MOV}$ is, this probably wouldn't have happened. I got pretty confused why `Elo.calculate_elo()` wasn't working but it was I was using the losers `Elo.margin_of_victory()` method to calculate $\text{MOV}$. Because of this confusion, I've decided to change the signature of `Elo.margin_of_victory()`. It was:
+```
+def margin_of_victory(self, margin, OPPRo, location):
+  return ((margin + 3)**0.8) / (7.5 + 0.006 * (self.elo - OPPRo + (self.home_adv_calc(location)*self.home_adv)))
+```
+To:
+```
+@staticmethod
+def margin_of_victory(margin, RDiff, location):
+  return ((margin + 3)**0.8) / (7.5 + 0.006 * (RDiff + Elo.home_adv_calc(location)*Elo.home_adv))
+```
+Now it doesn't have to depend on `Elo.elo` anymore and I can just use either class to calculate $\text{MOV}$.
+
+Something I just thought of, which is crazy considering, is why I don't just calculate the change in Elo for the winning team and then just minus the value for the losing team. I will see how this goes.
+
+Now onto the changes I made to my classes.
+
+First, I changed the `Schedule` by removing the abstract method tag on `__init__()` because now, `add_games(games)` is an abstract method. I made it an abstract method after I realised that the change I made yesterday meant that what was originally coded didn't make sense for both subclasses.
+> But the biggest difference is that using only the team name means that `Team.schedule` will only contain one entry per `GAME_ID` instead of two. `Team.schedule` will no longer store the oppositions game stats and now will have to use `GAME_ID` to find the oppositions stats from `Sesaon.schedule`.
+
+This meant that `TeamSchedule.add_games()` and `SeasonSchedule.add_games()` acted similarly, but not the same. Which is good news because having `__init__()` as an abstract method was a little bit silly.
+
+The biggest changes I made were to the `Elo` class. All the calculating methods besides `carry_over()` now return a value and are static methods. I also added a new function, `calculate_elo_change()` that returns the change in Elo rating. This is useful because now, I don't have to call `calculate_elo()` twice for each game. I can just calculate the change and negate the value to get the other teams change in Elo rating. So, then I had to add getter's, setter's and `update_elo()` for `Elo.elo` to accomodate these changes. `carry_over()` doesn't need to be a static method because I don't see why I would need to calculate the carry over because it's only called at the end of the season. Calculating the carry over at the end season without another season schedule would be pointless I think. Adding in these static methods meant I had to change the behaviour of `Season.initialise_team_elos()` a bit and of course the testing suite.
+
+Finally, I've completed the tests for `Season` and that concludes the testing suite for this iteration. My next aim is probably to try and convert my current code into the .NET framework and see how that goes. I can finally push simple-backend branch into main now.
