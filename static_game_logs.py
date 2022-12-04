@@ -98,13 +98,14 @@ dummy_SeasonSchedule.add_games(test_game_logs)
 SeasonSchedule = elo_system.SeasonSchedule()
 SeasonSchedule.initialise('2021')
 
+logs = dummy_SeasonSchedule.games[dummy_SeasonSchedule.games['TEAM_NAME'] == 'Brooklyn Nets'].reset_index(drop=True)
+logs.index += 1
+
+print(logs)
+
 Teams = list()
 
 for team in team_list.get_teams():
     Teams.append(elo_system.Team(team['full_name'], team['abbreviation']))
 
 Season21 = elo_system.Season(2021, Teams)
-
-Season21.schedule = SeasonSchedule
-
-Season21.initialise_team_schedules()

@@ -194,7 +194,7 @@ def test_Season_initialise_team_elos(Season21, dummy_SeasonSchedule):
 
     assert team.elo.get_elo() == 1494
 
-def test_end_season_changed_elo(Season21):
+def test_Season_end_season_changed_elo(Season21):
     team_name = 'Brooklyn Nets'
     team = Season21.get_team(team_name)
     team.elo.set_elo(1494)
@@ -202,7 +202,7 @@ def test_end_season_changed_elo(Season21):
 
     assert team.elo.get_elo() == 1496
 
-def test_end_season_non_changed_elo(Season21):
+def test_Season_end_sesaon_non_changed_elo(Season21):
     team_name = 'Washington Wizards'
     team = Season21.get_team(team_name)
     Season21.end_season()
