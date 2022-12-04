@@ -497,3 +497,6 @@ Finally, did refactor `Elo` a bit by adding a helper function as to not repeat c
 I've also completed the tests for `Elo` and something I should *probably* do is add some graphs that visualise some/all of my math functions in `Elo`. I could then easier visualise how the probability of winning changes depending on $\text{RDiff}$, $\text{K}$, and so on. But again, that's just something to do on the side maybe.
 
 Now I only have `Season` to write tests for since `Team` doesn't have anything that I would need to test for.
+
+# 4/12/22
+

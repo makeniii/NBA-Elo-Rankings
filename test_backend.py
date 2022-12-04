@@ -144,11 +144,11 @@ def test_margin_of_victory(Elo: elo_system.Elo):
     assert round(Elo.margin_of_victory(4, 1618, 'Away'), 2) == 0.77
 
 def test_calculate_elo(Elo: elo_system.Elo):
-    location = 'Away'
-    OPPRo = 1600
+    location = 'Home'
+    OPPRo = 1400
     win = 'W'
-    margin = 13
-
+    margin = 4
+    Elo.elo = 1518
     Elo.calculate_elo(win, OPPRo, location, Elo.margin_of_victory(margin, OPPRo, location))
 
-    assert Elo.elo == 1522
+    assert Elo.elo == 1520

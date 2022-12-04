@@ -108,5 +108,3 @@ Season21 = elo_system.Season(2021, Teams)
 Season21.schedule = SeasonSchedule
 
 Season21.initialise_team_schedules()
-
-bug_class = elo_system.Schedule()
