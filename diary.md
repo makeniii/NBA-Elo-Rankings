@@ -553,6 +553,16 @@ We can see how $\text{MOV}$ is used here:
 
 So, $\text{Win}_{team}\text{R}_{n}$ and $\text{Lose}_{team}\text{R}_{n}$ both use the $\text{MOV}$ value in their calculations.
 
+Also forgot to mention the change I made to $\text{HomeAdv}$. It is now,
+
+$$ 
+\text{HomeAdv} =
+  \begin{cases}
+    \displaystyle 100 & \quad \text{home game} \\
+    \displaystyle -100 & \quad \text{away game}
+  \end{cases}
+$$
+
 Something that I got confused about is that when calculating $\text{MOV}$, I have to calculate `RDiff` of the winner. If I had explained earlier what $\text{MOV}$ is, this probably wouldn't have happened. I got pretty confused why `Elo.calculate_elo()` wasn't working but it was I was using the losers `Elo.margin_of_victory()` method to calculate $\text{MOV}$. Because of this confusion, I've decided to change the signature of `Elo.margin_of_victory()`. It was:
 ```
 def margin_of_victory(self, margin, OPPRo, location):
