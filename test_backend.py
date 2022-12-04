@@ -131,24 +131,85 @@ def test_season_get_team_schedule(dummy_SeasonSchedule):
 def test_SeasonSchedule(SeasonSchedule, dummy_SeasonSchedule):
     assert_frame_equal(SeasonSchedule.get_game(2), dummy_SeasonSchedule.games.iloc[[2, 3]])
 
-def test_Elo_win_expectancy_calc_home(Elo: elo_system.Elo):
-    assert round(Elo.win_expectancy_calc(1700, 'Home'), 4) == 0.3599
+def test_Elo_win_expectancy_calc_home():
+    assert round(elo_system.Elo.win_expectancy_calc(1500, 1700, 'Home'), 4) == 0.3599
 
-def test_Elo_win_expectancy_calc_away(Elo: elo_system.Elo):
+def test_Elo_win_expectancy_calc_away():
     event_a = 0.3599
     event_b = 1 - event_a
-    Elo.elo = 1700
-    assert round(Elo.win_expectancy_calc(1500, 'Away'), 4) == event_b
+    assert round(elo_system.Elo.win_expectancy_calc(1700, 1500, 'Away'), 4) == event_b
 
-def test_margin_of_victory(Elo: elo_system.Elo):
-    assert round(Elo.margin_of_victory(4, 1618, 'Away'), 2) == 0.77
+def test_margin_of_victory():
+    RDiff = -118
+    margin = 4
+    assert round(elo_system.Elo.margin_of_victory(margin, RDiff, 'Away'), 2) == 0.77
 
-def test_calculate_elo(Elo: elo_system.Elo):
+def test_calculate_elo_winning_team():
     location = 'Home'
     OPPRo = 1400
-    win = 'W'
+    outcome = 'W'
     margin = 4
-    Elo.elo = 1518
-    Elo.calculate_elo(win, OPPRo, location, Elo.margin_of_victory(margin, OPPRo, location))
+    Ro = 1518
+    RDiff = Ro - OPPRo
+    mov = elo_system.Elo.margin_of_victory(margin, RDiff, location)
 
-    assert Elo.elo == 1520
+    assert elo_system.Elo.calculate_elo(Ro, outcome, OPPRo, location, mov) == 1520
+
+def test_calculate_elo_losing_team():
+    Ro = 1400
+    OPPRo = 1518
+    location = 'Away'
+    location_win = 'Home'
+    outcome = 'L'
+    margin = 4
+    RDiff = OPPRo - Ro
+    mov = elo_system.Elo.margin_of_victory(margin, RDiff, location_win)
+
+    assert elo_system.Elo.calculate_elo(Ro, outcome, OPPRo, location, mov) == 1398
+
+def test_Season_initialise_team_schedules(Season21, dummy_SeasonSchedule):
+    Season21.schedule = dummy_SeasonSchedule
+    Season21.initialise_team_schedules()
+    team = Season21.get_team('Brooklyn Nets')
+    logs = dummy_SeasonSchedule.games[dummy_SeasonSchedule.games['TEAM_NAME'] == 'Brooklyn Nets'].reset_index(drop=True)
+    logs.index += 1
+
+    assert_frame_equal(team.schedule.games, logs)
+
+def test_Season_initialise_team_schedules_empty(Season21, dummy_SeasonSchedule):
+    Season21.schedule = dummy_SeasonSchedule
+    Season21.initialise_team_schedules()
+    team = Season21.get_team('Washington Wizards')
+    logs = dummy_SeasonSchedule.games[dummy_SeasonSchedule.games['TEAM_NAME'] == 'Washington Wizards'].reset_index(drop=True)
+    logs.index += 1
+
+    assert_frame_equal(team.schedule.games, logs)
+
+def test_Season_initialise_team_elos(Season21, dummy_SeasonSchedule):
+    team_name = 'Brooklyn Nets'
+    team = Season21.get_team(team_name)
+    Season21.schedule = dummy_SeasonSchedule
+    Season21.initialise_team_schedules()
+    Season21.initialise_team_elos()
+
+    assert team.elo.get_elo() == 1494
+
+def test_end_season_changed_elo(Season21):
+    team_name = 'Brooklyn Nets'
+    team = Season21.get_team(team_name)
+    team.elo.set_elo(1494)
+    Season21.end_season()
+
+    assert team.elo.get_elo() == 1496
+
+def test_end_season_non_changed_elo(Season21):
+    team_name = 'Washington Wizards'
+    team = Season21.get_team(team_name)
+    Season21.end_season()
+
+    assert team.elo.get_elo() == 1500
+
+def test_Season_given_empty_teams():
+    empty = []
+    with pytest.raises(Exception) as err_info:
+        season = elo_system.Season(2021, empty)
