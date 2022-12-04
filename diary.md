@@ -500,8 +500,44 @@ Now I only have `Season` to write tests for since `Team` doesn't have anything t
 
 # 4/12/22
 
+I've realised that I've forgot to explain a slight change to $\text{W}$ that I made while coding.
 
+This was what I thought $\text{W}$ should be set to before I started coding:
+
+>$$ 
+\text{W} =
+  \begin{cases}
+    \displaystyle 1 & \quad \text{a win} \\
+    \displaystyle 0.5 & \quad \text{goes OT} \\
+    \displaystyle 0 & \quad \text{a loss}
+  \end{cases}
+$$
+
+Once I started coding, I figured that using a zero sum value is what actually makes sense because a losing team should lose as much rating as the winning team gains. Also removed the overtime value for simplicity. So, $\text{W}$ is now:
+
+$$ 
+\text{W} =
+  \begin{cases}
+    \displaystyle 1 & \quad \text{a win} \\
+    \displaystyle -1 & \quad \text{a loss}
+  \end{cases}
+$$
+
+Now, to $\text{W}_{e}$. $\text{W}_e$ is calculated using this formula:
+
+>$$\frac{1}{10^{-\frac{\text{RDiff}+\text{HomeAdv}}{x}}+1}$$
+
+But for simplicity, $\text{RDiff} = \text{RDiff} + \text{HomeAdv}$. So,
+$$\frac{1}{10^{-\frac{\text{RDiff}}{x}}+1}$$
+
+I made a little video showcasing how $x$ scales $\text{W}_{e}$ below.
 
 https://user-images.githubusercontent.com/117491084/205468009-e5710d44-6381-4915-8337-6fc2d5f494bd.mp4
 
+We see that setting $x = 200$ is too aggressive while $x = 600$ is not aggressive enough. So I do think that having $x = 400$ is probably the right value. Not because it seems like every other major site that has implemented the Elo system uses $400$.
 
+Also, I've found [fivethiryeight's](https://fivethirtyeight.com/features/how-we-calculate-nba-elo-ratings/) way of calculating the point spread based on Elo.
+
+>Here’s the formula: Take the difference of the two teams’ Elo ratings, add 100 points for the home team and then divide by 28.
+
+This is something that I'm going to want to use for functions I have in mind down the line.
