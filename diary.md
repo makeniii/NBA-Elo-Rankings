@@ -500,3 +500,8 @@ Now I only have `Season` to write tests for since `Team` doesn't have anything t
 
 # 4/12/22
 
+
+
+https://user-images.githubusercontent.com/117491084/205468009-e5710d44-6381-4915-8337-6fc2d5f494bd.mp4
+
+
