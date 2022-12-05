@@ -2,3 +2,8 @@
 /.vscode
 /.pytest_cache
 /__pycache__
+/nba_elo_system/tests/__pycache__
+/nba_elo_system/tests/.pytest_cache
+/espn.py
+nba_elo_system/__pycache__/__init__.cpython-39.pyc
+nba_elo_system/__pycache__/elo_system.cpython-39.pyc
