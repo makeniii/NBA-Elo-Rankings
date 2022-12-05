@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import elo_system
+from .. import elo_system
 from nba_api.stats.endpoints import leaguegamelog
 from nba_api.stats.static import teams as team_list
 
@@ -97,11 +97,6 @@ dummy_SeasonSchedule.add_games(test_game_logs)
 
 SeasonSchedule = elo_system.SeasonSchedule()
 SeasonSchedule.initialise('2021')
-
-logs = dummy_SeasonSchedule.games[dummy_SeasonSchedule.games['TEAM_NAME'] == 'Brooklyn Nets'].reset_index(drop=True)
-logs.index += 1
-
-print(logs)
 
 Teams = list()
 

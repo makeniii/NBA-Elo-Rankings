@@ -1,7 +1,4 @@
-from nba_api.stats.endpoints import teamgamelog
-from nba_api.live.nba.endpoints import boxscore
 from nba_api.stats.endpoints import leaguegamelog
-from nba_api.stats.endpoints import commonplayoffseries
 import pandas as pd
 import numpy as np
 from abc import ABC, abstractmethod

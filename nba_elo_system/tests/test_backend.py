@@ -1,11 +1,10 @@
 import pytest
-import elo_system
+from .. import elo_system
 import pandas as pd
 from pandas.testing import assert_frame_equal
-import static_game_logs as test_data
+import nba_elo_system.tests.test_backend_data as test_data
 from nba_api.stats.endpoints import leaguegamelog
 import json
-import math
 
 @pytest.fixture
 def game_logs():
