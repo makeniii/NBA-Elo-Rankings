@@ -608,3 +608,7 @@ After about a few hours of looking into .NET and what framework to actually use 
 # 9/12/22
 
 Created a new branch for the front end of the first iteration. Now, will just need to decide whether I use Django or Flask.
+
+I've decided on Flask and created some tasks to reflect what the frontend should be by the end of the iteration.
+
+I added some folders and files to structure my project like a flask project. I completed the `base.html` file that displays what every page should have for it's header/footer/format. So, for the time being, my base html file is completed barring any issues that I have with the layout when displaying all teams in a table.
