@@ -604,3 +604,7 @@ I'm not going to bother with changing api's til I complete the front and can use
 # 6/12/22
 
 After about a few hours of looking into .NET and what framework to actually use - like ASP.NET, I decided to put this off until I complete the front end with what will probably be with flask. I'll leave the .NET development branch up for later use.
+
+# 9/12/22
+
+Created a new branch for the front end of the first iteration. Now, will just need to decide whether I use Django or Flask.
