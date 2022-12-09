@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" type="text/css">
+    {% block head %}{% endblock %}
+</head>
+<body class="background-colour">
+    <header>
+        <nav>
+            <div class="nav-logo">
+                <div><img src="{{ url_for('static', filename='icons/basketball.png') }}" class="logo"></div>
+                <div><h1 class="title">NBA Elo Ratings</h1></div>
+            </div>
+            <ul class="nav-links">
+                <li><a href="">Home</a></li>
+                <li><a href="">Teams</a></li>
+                <li><a href="">About</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        {% block body %}{% endblock body %}
+    </main>
+    <footer>
+        <p>
+            &lt;IN DEVELOPMENT | BY ADAM RABIYA&gt;
+        </p>
+    </footer>
+</body>
+</html>
