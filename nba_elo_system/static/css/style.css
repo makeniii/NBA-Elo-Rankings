@@ -3,7 +3,7 @@
     --background-primary: #CFCFCF;
     --background-secondary: #8C8C8C;
     --text-colour: #fff;
-    --accent-colour: #5F4BB6;
+    --accent-colour: #7d7abc;
     --header-padding: 20px 2.5%;
     --main-width: 75%;
 }
@@ -23,49 +23,49 @@
     background: var(--background-secondary);
 }
 
-header{
+header {
     align-self: center;
     padding: var(--header-padding);
 }
 
-nav{
+nav {
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
 
-.logo{
+.logo {
     width: 75px;
 }
 
-.nav-logo{
+.nav-logo {
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.nav-logo h1{
+.nav-logo h1 {
     font-size:  200%;
     padding-left: 20px;
 }
 
-.nav-links{
+.nav-links {
     padding: 28px 0;
 }
 
-.nav-links li{
+.nav-links li {
     display: inline-block;
     margin: 0 15px;
 }
 
-.nav-links li a{
+.nav-links li a, li p {
     text-decoration: none;
     color: var(--text-colour);
     padding: 10px 0;
     position: relative;
 }
 
-.nav-links li a::after{
+.nav-links li a::after, li p::after {
     content: '';
     background: var(--accent-colour);
     width: 0;
@@ -76,13 +76,13 @@ nav{
     transition: width 0.5s;
 }
 
-.nav-links li a:hover::after{
+.nav-links li a:hover::after, li p:hover::after {
     width: 100%;
 }
 
-main{
+main {
     margin: auto;
-    padding: 25px 15px;
+    padding: 0px 15px;
     width: 90%;
     border-radius: 5px;
     min-height: calc(100vh - 119px - 60px);
@@ -92,22 +92,50 @@ main{
 .main-body {
     text-align: center;
     background: var(--background-primary);
-    min-height: calc(100vh - 119px - 60px - 50px);
+    min-height: calc(100vh - 136px * 2);
     width: var(--main-width);
     margin: auto;
-    padding: 15px;
+    padding: 20px;
     border-radius: 5px;
 }
 
-.title{
+.title {
     color: var(--text-colour);
 }
 
-footer{
+.elo-table {
+    width: 100%;
+    padding: 10px 0;
+    margin: auto;    
+    border-collapse: collapse;
+}
+
+.elo-table-outer-left {
+    padding: 10px 5px;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+}
+
+.elo-table-outer-right {
+    padding: 10px 5px;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+.elo-table-team-row {
+    width: 70%;
+    text-align: left;
+}
+
+.elo-table-teams:hover {
+    background: var(--accent-colour);
+}
+
+footer {
     color: var(--text-colour);
     bottom: 0;
     width: 100%;
     text-align: center;
-    height: 60px;
-    padding: 20px;
+    height: 136px;
+    padding: 58px;
 }

@@ -6,6 +6,20 @@
 
 {% block body %}
     <div class="main-body">
-        <p>&lt;This is where my table should be&gt;</p>
+        <table class="elo-table">
+            <tr>
+                <th class="elo-table-outer-left">RANK</th>
+                <th class="elo-table-team-row">TEAM</th>
+                <th class="elo-table-outer-right">ELO</th>
+            </tr>
+            {% for team in teams %}
+            <tr class="elo-table-teams">
+                <td class="elo-table-outer-left">{{ loop.index }}</td>
+                <td class="elo-table-team-row">{{ team.name }}</td>
+                <td class="elo-table-outer-right">{{ team.elo.elo }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        
     </div>
 {% endblock body %}
