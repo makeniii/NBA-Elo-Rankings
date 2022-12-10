@@ -52,5 +52,5 @@ $x$|Determines how fast win expectancy changes. $x = 400$.
 
 ## More infomation
 
-I have more information on the formula and changes that I've went through in my [diary](diary.md) if interested.
+I have more information on the formula and changes that I've went through littered throughout in my [diary](diary.md) if interested.
 
