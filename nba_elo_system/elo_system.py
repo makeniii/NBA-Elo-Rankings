@@ -3,8 +3,6 @@ import pandas as pd
 import numpy as np
 from abc import ABC, abstractmethod
 
-get_both_games = False
-
 '''
 A few helper functions just to shorten the length of code to make it easier to read
 '''
@@ -90,11 +88,8 @@ class SeasonSchedule(Schedule):
         # so remove current ongoning games that don't have fully filled columns
         self.games = self.games.dropna()
 
-    def get_team_schedule(self, team_name) -> pd.DataFrame:
-        if get_both_games:
-            return self.games[self.games.MATCHUP.str.contains(team_name)]
-        else:            
-            return self.games[self.games.TEAM_NAME == team_name]
+    def get_team_schedule(self, team_abbreviation) -> pd.DataFrame:       
+        return self.games[self.games.TEAM_ABBREVIATION == team_abbreviation]
     
     def add_games(self, games: pd.DataFrame) -> None:
         super().add_games(games)
@@ -194,8 +189,8 @@ class Season():
         games = self.schedule.games
 
         for i in range(0, len(games), 2):
-            team_a: Team = self.get_team(games.iloc[i]['TEAM_NAME'])
-            team_b: Team = self.get_team(games.iloc[i+1]['TEAM_NAME'])
+            team_a: Team = self.get_team_abbreviation(games.iloc[i]['TEAM_ABBREVIATION'])
+            team_b: Team = self.get_team_abbreviation(games.iloc[i+1]['TEAM_ABBREVIATION'])
 
             # For each team (x2)
             if games.iloc[i]['WL'] == 'W':
@@ -215,10 +210,7 @@ class Season():
 
     def initialise_team_schedules(self):
         for team in self.teams:
-            if get_both_games:
-                season_games = self.schedule.get_team_schedule(team.abbreviation)
-            else:
-                season_games = self.schedule.get_team_schedule(team.name)
+            season_games = self.schedule.get_team_schedule(team.abbreviation)
             season_games = season_games.reset_index(drop=True)
             team.schedule.add_games(season_games)
     
@@ -246,7 +238,7 @@ class Team():
         Team.teams.append(self)
 
     def __repr__(self) -> str:
-        return self.name + ': ' + self.elo
+        return self.name + ', aka ' + self.abbreviation + ': ' + str(self.elo)
 
     @staticmethod
     def get_team(team_name: str):
