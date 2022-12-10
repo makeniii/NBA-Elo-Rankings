@@ -46,10 +46,14 @@ localhost:5000
 
 or <a href="http:localhost:5000">click here<a/>.
 
-## Acknowledgement
+## Acknowledgements
 
-My icons are from:
+I was able to find icons thanks to [Bharat Icons](https://www.flaticon.com/free-icons/basketball).
 
-<a href="https://www.flaticon.com/free-icons/basketball" title="basketball icons">Basketball icons created by Bharat Icons - Flaticon</a>
+Thanks to the developers of [nba_api](https://github.com/swar/nba_api).
 
 Again, I've taken a lot of the formulation from [FiveThirtyEight's](https://fivethirtyeight.com/features/how-we-calculate-nba-elo-ratings/) model, and to a lesser extent, these [Football](http://www.eloratings.net/) and [NRL](https://fanalytics.weebly.com/) models. The rest of the formula is from [Arpad Elo's Elo rating system](https://en.wikipedia.org/wiki/Elo_rating_system).
+
+## NBA.com
+
+NBA.com has a [Terms of Use](https://www.nba.com/termsofuse) regarding the use of the NBA’s digital platforms.
