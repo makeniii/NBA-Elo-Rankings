@@ -612,3 +612,21 @@ Created a new branch for the front end of the first iteration. Now, will just ne
 I've decided on Flask and created some tasks to reflect what the frontend should be by the end of the iteration.
 
 I added some folders and files to structure my project like a flask project. I completed the `base.html` file that displays what every page should have for it's header/footer/format. So, for the time being, my base html file is completed barring any issues that I have with the layout when displaying all teams in a table.
+
+# 10/12/22
+
+Found an a bug in `elo_system.py`. The attribute `TEAM_NAME` from using `leaguegamelog` is not *always* the same as the `FULL_TEAM_NAME` in `nba_api.stats.static.teams`. So, that means I have to use something else to match game to team. It's now using `TEAM_ABBREVIATION` to do this instead. I will need to update the testing to reflect this change. Wanted to keep all backend modifications to it's own branch but unfortunately, didn't.
+
+Didn't mention this yesterday but the header of the website contains `Teams` and `About` which are just placeholders that do nothing at the moment. `Home` does redirect the user to the main page.
+
+Made some changes to the `index.html` and `base.html`. Some minor formatting changes and the same with `style.css`. I created a `models.py` file where it instantiates classes from `elo_system.py`. It isn't ideal but I'll leave it for now.
+
+Completed the first iteration of the frontend which is great. Now, before I move on to new features. I'm going to try and solve this problem,
+
+> I've experienced being blocked after four calls to the api so I'm trying to think of a way to prevent this ever being a problem because the only way I could think about fixing it was with `sleep()`.
+
+This problem isn't an issue at the moment, but in the future, if I want to calculate historical data, then there'll be too many calls to NBA-api. To fix this, I'm thinking of setting up a database in MySQL which is a simple lightweight database. With this database, I would have to initialise it if it didn't exist already. To initialise the database, I would need data. The data I would currently need would only be the 22' and 23' seasons which is what I already have, just not in database form. But, as I said earlier, that wouldn't work with how I get my data at the moment.
+
+To try and solve this, I have two ideas:
+1. Use the ESPN-api to gather the data. Since there's seemingly no limit to the number of calls to the api, I won't have a problem because from the documentation that I've gathered earlier, there are no calls to get whole seasons worth of game logs. So, I'll have to combine data across different calls.
+2. Use the NBA-api to gather the data but use `sleep()`. Hopefully it doesn't come to this solution since the performance is poor.
