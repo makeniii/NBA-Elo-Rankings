@@ -630,3 +630,11 @@ This problem isn't an issue at the moment, but in the future, if I want to calcu
 To try and solve this, I have two ideas:
 1. Use the ESPN-api to gather the data. Since there's seemingly no limit to the number of calls to the api, I won't have a problem because from the documentation that I've gathered earlier, there are no calls to get whole seasons worth of game logs. So, I'll have to combine data across different calls.
 2. Use the NBA-api to gather the data but use `sleep()`. Hopefully it doesn't come to this solution since the performance is poor.
+
+# 11/12/22
+
+Now that I've completed the first iteration, I'm just going to make a front end and a back end branch where I'll be making changes to both on a rolling basis. Instead of having iteration branches, I'm just going to be using these branches to implement/fix features because I have no real end goal and can constantly come up with new features. As an aside, backend and server mean the same thing in the context of the web application.
+
+The next milestone of the project is to implement the database.
+
+I decided on MySQL earlier but I really don't need a fully fledged dbms. So, I'll be using pythons SQLite for my database.
