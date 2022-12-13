@@ -630,3 +630,7 @@ This problem isn't an issue at the moment, but in the future, if I want to calcu
 To try and solve this, I have two ideas:
 1. Use the ESPN-api to gather the data. Since there's seemingly no limit to the number of calls to the api, I won't have a problem because from the documentation that I've gathered earlier, there are no calls to get whole seasons worth of game logs. So, I'll have to combine data across different calls.
 2. Use the NBA-api to gather the data but use `sleep()`. Hopefully it doesn't come to this solution since the performance is poor.
+
+# 13/12/22
+
+Making decent progress on retrieving data from ESPN's api. Will write about it tomorrow.
