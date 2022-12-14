@@ -638,7 +638,9 @@ Making decent progress on retrieving data from ESPN's api. Will write about it t
 # 14/12/22
 
 I'm able to use the ESPN api to retrieve a whole sesaon's worth of data and formatted it to match my relational diagram. Speaking of diagrams, here are my ERD and RD for my database.
+  
+![entity relationship diagram](https://user-images.githubusercontent.com/117491084/207506817-5fc088ce-96c1-4da1-b3a4-336f17dcff27.png)
+  
+![relational diagram](https://user-images.githubusercontent.com/117491084/207506841-f05d718a-d356-454c-b0ba-8c0831d35837.png)
 
-![ERD](entity%20relationship%20diagram.png)
 
-![RD](relational%20diagram.png)
