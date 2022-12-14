@@ -21,7 +21,7 @@ CREATE TABLE PlaysIn (
     TeamID INTEGER,
     Score INTEGER NOT NULL,
     Location TEXT NOT NULL,
-    Outcome TEXT NOT NULL,
+    Outcome TEXT,
     PRIMARY KEY (GameID, TeamID)
 );
 
