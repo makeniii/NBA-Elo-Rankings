@@ -637,10 +637,18 @@ Making decent progress on retrieving data from ESPN's api. Will write about it t
 
 # 14/12/22
 
-I'm able to use the ESPN api to retrieve a whole sesaon's worth of data and formatted it to match my relational diagram. Speaking of diagrams, here are my ERD and RD for my database.
+I'm able to use the ESPN api to retrieve a whole sesaon's worth of data and formatted it to match my relational diagram. Speaking of diagrams, here is my ERD and RD for my database.
   
 ![entity relationship diagram](https://user-images.githubusercontent.com/117491084/207506817-5fc088ce-96c1-4da1-b3a4-336f17dcff27.png)
   
 ![relational diagram](https://user-images.githubusercontent.com/117491084/207506841-f05d718a-d356-454c-b0ba-8c0831d35837.png)
 
+Now, the next step is to set up the database and insert the values.
 
+I found a few problems with ESPNs api, or at least, problems when it comes to older historical data. First of all, it seems like the limit on how far you can gather data is back to the 2003 season. Not sure if this is correct but it seems they store 20 nba seasons of data. So, with that being said, I won't be able to get older data unfortunately. Will have to use another source for that when once I implement functionality for historical seasons. Another potential problem is that the the number of teams throughout the seasons change. Another quirk that I'll have to look out for is that team names change and the team endpoint for ESPN, doesn't return historical teams either, only current teams. For now, I can create the nba season from 2005 onwards so that 2004 and 2003 are unable to work with this current iteration because there is one less team in nba.
+
+Created an [ideas file](ideas.md) to contain ideas I have about the functionality or ui of the web app.
+
+Completed loading data into the database. Now when running `db.py`, seasons 2005-2023 will be stored in database.
+
+The next thing to do is to update the classes in `elo_system`. Since there is no more data to manage anymore, I will probably change most, if not all, methods that aren't redundant to static.
