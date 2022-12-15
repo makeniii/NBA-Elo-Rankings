@@ -660,3 +660,7 @@ Created an [ideas file](ideas.md) to contain ideas I have about the functionalit
 Completed loading data into the database. Now when running `db.py`, seasons 2005-2023 will be stored in database.
 
 The next thing to do is to update the classes in `elo_system`. Since there is no more data to manage anymore, I will probably change most, if not all, methods that aren't redundant to static.
+
+# 15/12/22
+
+After some more thinking and research, it's best if I just use sqlalchemy to manage the database. This change means that `elo_system.py` is now depreciated. I'll probably keep it around because I still might use the NBA-api to get historical data since I can't with ESPN's.
