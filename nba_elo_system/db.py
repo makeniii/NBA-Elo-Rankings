@@ -8,6 +8,7 @@ from sqlite3 import OperationalError
 from pathlib import Path
 import datetime
 from elo_calculator import EloCalculator
+import os
 
 def get_team(teams, team_key):
     for x in teams:
@@ -278,114 +279,201 @@ def create_nba_season_data(year, teams, progress, bar):
 
     return progress
 
+def initialise_db(dbpath):
+    years = [
+        '2005',
+        '2006',
+        '2007',
+        '2008',
+        '2009',
+        '2010',
+        '2011',
+        '2012',
+        '2013',
+        '2014',
+        '2015',
+        '2016',
+        '2017',
+        '2018',
+        '2019',
+        '2020',
+        '2021',
+        '2022',
+        '2023'
+        ]
 
-years = [
-    '2005',
-    '2006',
-    '2007',
-    '2008',
-    '2009',
-    '2010',
-    '2011',
-    '2012',
-    '2013',
-    '2014',
-    '2015',
-    '2016',
-    '2017',
-    '2018',
-    '2019',
-    '2020',
-    '2021',
-    '2022',
-    '2023'
-    ]
-
-widgets = [' [',
-            progressbar.Timer(format= 'elapsed time: %(elapsed)s'),
-            '] ',
-            progressbar.Bar('*'),' (',
-            progressbar.ETA(), ') ',
-            ]
-    
-bar = progressbar.ProgressBar(maxval=32700*len(years), widgets=widgets).start()
-prog = 0
-
-dbpath = Path(__file__).parent / 'nba.db'
-con = sqlite3.connect(dbpath)
-cur = con.cursor()
-
-filepath = Path(__file__).parent / 'schema.sql'
-executeScriptsFromFile(filepath, cur)
-
-data = requests.get('https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams?limit=30').json()
-
-teams = list()
-team_table = pd.DataFrame()
-
-for team in data['sports'][0]['leagues'][0]['teams']:
-    teams.append(team['team'])
-    team_table = pd.concat([team_table, pd.DataFrame(
-        [{
-            'id': int(team['team']['id']),
-            'name': team['team']['displayName'],
-            'short_name': team['team']['shortDisplayName'],
-            'abbreviation': team['team']['abbreviation'],
-            'elo': 1500
-        }]
-    )])
-
-team_table.to_sql(name='team', con=con, if_exists='append', index=False)
-
-con.commit()
-
-for year in years:
-    prog = create_nba_season_data(year, teams, prog, bar)
-
-cur.execute('''SELECT * FROM season''')
-
-for season in cur.fetchall():
-    cur.execute('''
-    SELECT plays_in.game_id, plays_in.team_id, plays_in.score, plays_in.location, plays_in.outcome
-    FROM plays_in
-    INNER JOIN game ON plays_in.game_id = game.id
-    WHERE game.season_id = (?)
-    AND plays_in.outcome IS NOT NULL
-    ORDER BY game.date ASC
-    ''', (season[0],))
-
-    playsin_df = pd.DataFrame(cur.fetchall(), columns=['game_id', 'team_id', 'score', 'location', 'outcome'])
-
-    cur.execute('''SELECT * FROM team''')
-    team_df = pd.DataFrame(cur.fetchall(), columns=['id', 'name', 'short_name', 'abbreviation', 'elo'])
-    team_df['elo'] = round(team_df['elo'] * 0.75 + 1500 * 0.25)
-    team_df = team_df.astype({"elo": int})
-    
-    for i in range(0, len(playsin_df), 2):
-        team_a = team_df[team_df['id'] == playsin_df.iloc[i, 1]]
-        team_b = team_df[team_df['id'] == playsin_df.iloc[i+1, 1]]
-        team_a_elo = team_a.iloc[0]['elo']
-        team_b_elo = team_b.iloc[0]['elo']
-
-        if playsin_df.iloc[i]['outcome'] == 'W':
-            winner = 0
-            RDiff = team_a_elo - team_b_elo
-            margin = playsin_df.iloc[i]['score'] - playsin_df.iloc[i+1]['score']
-        else:
-            winner = 1
-            RDiff = team_b_elo - team_a_elo
-            margin = playsin_df.iloc[i+1]['score'] - playsin_df.iloc[i]['score']
-
-        mov = EloCalculator.margin_of_victory(
-                margin,
-                RDiff,
-                playsin_df.iloc[i+winner]['location']
-            )
+    widgets = [' [',
+                progressbar.Timer(format= 'elapsed time: %(elapsed)s'),
+                '] ',
+                progressbar.Bar('*'),' (',
+                progressbar.ETA(), ') ',
+                ]
         
-        team_a_elo_change = EloCalculator.elo_change(team_a_elo, playsin_df.iloc[i]['outcome'], team_b_elo, playsin_df.iloc[i]['location'], mov)
-        team_df.loc[team_df['id'] == playsin_df.iloc[i, 1], 'elo'] = team_a_elo + team_a_elo_change
-        team_df.loc[team_df['id'] == playsin_df.iloc[i+1, 1], 'elo'] = team_b_elo - team_a_elo_change
+    bar = progressbar.ProgressBar(maxval=32700*len(years), widgets=widgets).start()
+    prog = 0
 
-    team_df.to_sql(name='team', con=con, if_exists='replace', index=False)
+    con = sqlite3.connect(dbpath)
+    cur = con.cursor()
 
-con.close()
+    filepath = Path(__file__).parent / 'schema.sql'
+    executeScriptsFromFile(filepath, cur)
+
+    data = requests.get('https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams?limit=30').json()
+
+    teams = list()
+    team_table = pd.DataFrame()
+
+    for team in data['sports'][0]['leagues'][0]['teams']:
+        teams.append(team['team'])
+        team_table = pd.concat([team_table, pd.DataFrame(
+            [{
+                'id': int(team['team']['id']),
+                'name': team['team']['displayName'],
+                'short_name': team['team']['shortDisplayName'],
+                'abbreviation': team['team']['abbreviation'],
+                'elo': 1500
+            }]
+        )])
+
+    team_table.to_sql(name='team', con=con, if_exists='append', index=False)
+
+    con.commit()
+
+    for year in years:
+        prog = create_nba_season_data(year, teams, prog, bar)
+
+    cur.execute('''SELECT * FROM season''')
+
+    for season in cur.fetchall():
+        cur.execute('''
+        SELECT plays_in.game_id, plays_in.team_id, plays_in.score, plays_in.location, plays_in.outcome
+        FROM plays_in
+        INNER JOIN game ON plays_in.game_id = game.id
+        WHERE game.season_id = (?)
+        AND plays_in.outcome IS NOT NULL
+        ORDER BY game.date ASC
+        ''', (season[0],))
+
+        playsin_df = pd.DataFrame(cur.fetchall(), columns=['game_id', 'team_id', 'score', 'location', 'outcome'])
+
+        cur.execute('''SELECT * FROM team''')
+        team_df = pd.DataFrame(cur.fetchall(), columns=['id', 'name', 'short_name', 'abbreviation', 'elo'])
+        team_df['elo'] = round(team_df['elo'] * 0.75 + 1500 * 0.25)
+        team_df = team_df.astype({"elo": int})
+        
+        for i in range(0, len(playsin_df), 2):
+            team_a = team_df[team_df['id'] == playsin_df.iloc[i, 1]]
+            team_b = team_df[team_df['id'] == playsin_df.iloc[i+1, 1]]
+            team_a_elo = team_a.iloc[0]['elo']
+            team_b_elo = team_b.iloc[0]['elo']
+
+            if playsin_df.iloc[i]['outcome'] == 'W':
+                winner = 0
+                RDiff = team_a_elo - team_b_elo
+                margin = playsin_df.iloc[i]['score'] - playsin_df.iloc[i+1]['score']
+            else:
+                winner = 1
+                RDiff = team_b_elo - team_a_elo
+                margin = playsin_df.iloc[i+1]['score'] - playsin_df.iloc[i]['score']
+
+            mov = EloCalculator.margin_of_victory(
+                    margin,
+                    RDiff,
+                    playsin_df.iloc[i+winner]['location']
+                )
+            
+            team_a_elo_change = EloCalculator.elo_change(team_a_elo, playsin_df.iloc[i]['outcome'], team_b_elo, playsin_df.iloc[i]['location'], mov)
+            team_df.loc[team_df['id'] == playsin_df.iloc[i, 1], 'elo'] = team_a_elo + team_a_elo_change
+            team_df.loc[team_df['id'] == playsin_df.iloc[i+1, 1], 'elo'] = team_b_elo - team_a_elo_change
+
+        team_df.to_sql(name='team', con=con, if_exists='replace', index=False)
+
+    con.close()
+
+
+if __name__ == '__main__':
+    dbpath = Path(__file__).parent / 'nba.db'
+    if os.path.isfile(dbpath):
+        date = datetime.datetime.today() - datetime.timedelta(days=1, hours=15)
+        curr_date = date.date()
+
+        con = sqlite3.connect(dbpath)
+        cur = con.cursor()
+
+        cur.execute(
+            '''
+            SELECT date FROM game WHERE status = 3 ORDER BY date DESC
+            '''
+        )
+
+        date = cur.fetchone()[0]
+        date = datetime.datetime.strptime(date, '%Y-%m-%d').date() - datetime.timedelta(days=1)
+
+        if curr_date > date:
+            date = date.replace('-','')
+            curr_date = curr_date.replace('-','')
+
+            print(date)
+            print(curr_date)
+
+            data = requests.get('http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?&dates=' + date + '-' + curr_date).json()
+            game_table = pd.DataFrame()
+            playsin_table = pd.DataFrame()
+
+            for event in data['events']:
+                game = event['competitions'][0]
+                game_status = game['status']['type']['id']
+                
+                game_id = int(game['id'])
+
+                game_entry = pd.DataFrame(
+                    [{
+                        'id': game_id,
+                        'status': int(game_status)
+                    }]
+                )
+
+                game_table = pd.concat([game_table, game_entry])
+
+                if game_status == '3':
+                    home = pd.Series(
+                        {
+                            'game_id': game_id,
+                            'team_id': int(game['competitors'][0]['id']),
+                            'score': int(game['competitors'][0]['score']),
+                            'outcome': 'W' if game['competitors'][0]['winner'] else 'L'
+                        }
+                    )
+
+                    away = pd.Series(
+                        {
+                            'game_id': game_id,
+                            'team_id': int(game['competitors'][1]['id']),
+                            'score': int(game['competitors'][1]['score']),
+                            'outcome': 'W' if game['competitors'][1]['winner'] else 'L'
+                        }
+                    )
+
+                playsin_table = pd.concat([playsin_table, pd.DataFrame([home, away])])
+
+            for index, row in game_table.iterrows():
+                cur.execute("""
+                UPDATE game
+                SET status = (?)
+                WHERE id = (?)
+                """, (row['status'], row['id'],))
+            
+            for index, row in playsin_table.iterrows():
+                cur.execute("""
+                UPDATE plays_in
+                SET score = (?), outcome = (?)
+                WHERE game_id = (?) AND team_id = (?)
+                """, (row['score'], row['outcome'], row['game_id'], row['team_id'],))
+            
+            print(f"{len(game_table)} Updates to 'game'")
+            print(f"{len(playsin_table)} Updates to 'plays_in'")
+
+        con.commit()
+        con.close()
+    else:
+        initialise_db(dbpath)
