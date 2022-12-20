@@ -90,6 +90,12 @@ def create_nba_season_data(year, teams, progress, bar):
         {'carry_over': 0.25 * Elo_Calculator.elo_avg}
     )
 
+    cur.execute("""SELECT * FROM team ORDER BY elo DESC""")
+
+    for team in cur.fetchall():
+        print(team)
+    
+
     con.commit()
     regular_season = '2'
     post_season = '3'
@@ -238,7 +244,7 @@ def create_nba_season_data(year, teams, progress, bar):
                         'game_id': game_id,
                         'team_id': int(game['competitors'][0]['id']),
                         'score': int(game['competitors'][0]['score']['value']),
-                        'location': game['competitors'][0]['homeAway'],
+                        'location': 'home',
                         'outcome': 'W' if game['competitors'][0]['winner'] else 'L'
                     }
                 )
@@ -248,12 +254,11 @@ def create_nba_season_data(year, teams, progress, bar):
                         'game_id': game_id,
                         'team_id': int(game['competitors'][1]['id']),
                         'score': int(game['competitors'][1]['score']['value']),
-                        'location': game['competitors'][1]['homeAway'],
+                        'location': 'away',
                         'outcome': 'W' if game['competitors'][1]['winner'] else 'L'
                     }
                 )
 
-                
                 cur.execute(
                     '''
                     SELECT elo
@@ -291,7 +296,7 @@ def create_nba_season_data(year, teams, progress, bar):
                 home_elo_tmp = home_elo
 
                 home_elo = Elo_Calculator.elo(
-                    home_elo_tmp,
+                    home_elo,
                     home['outcome'],
                     away_elo,
                     home['location'],
@@ -329,7 +334,7 @@ def create_nba_season_data(year, teams, progress, bar):
                         'game_id': game_id,
                         'team_id': int(game['competitors'][0]['id']),
                         'score': 0,
-                        'location': game['competitors'][0]['homeAway'],
+                        'location': 'home',
                         'outcome': None
                     }
                 )
@@ -339,7 +344,7 @@ def create_nba_season_data(year, teams, progress, bar):
                         'game_id': game_id,
                         'team_id': int(game['competitors'][1]['id']),
                         'score': 0,
-                        'location': game['competitors'][1]['homeAway'],
+                        'location': 'away',
                         'outcome': None
                     }
                 )
@@ -353,8 +358,6 @@ def create_nba_season_data(year, teams, progress, bar):
     # print(game_table)
     # print()
     # print(playsin_table)
-
-    # calculate elo ratings
 
     season_table.to_sql(name='season', con=con, if_exists='append', index=False)
     game_table.to_sql(name='game', con=con, if_exists='append', index=False)
