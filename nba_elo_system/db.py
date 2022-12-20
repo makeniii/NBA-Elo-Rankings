@@ -414,10 +414,10 @@ for season in cur.fetchall():
             )
         
         team_a_elo_change = Elo_Calculator.elo_change(team_a_elo, playsin_df.iloc[i]['outcome'], team_b_elo, playsin_df.iloc[i]['location'], mov)
-        if team_a.iloc[0]['abbreviation'] == 'GS' and team_a_elo == 1651:
+        if team_a.iloc[0]['abbreviation'] == 'GS' and team_a_elo == 1642:
             # print(f'Ro: {team_a_elo}, elo change: {team_a_elo_change}')
             print(playsin_df.iloc[[i, i+1]])
-        if team_b.iloc[0]['abbreviation'] == 'GS' and team_b_elo == 1651:
+        if team_b.iloc[0]['abbreviation'] == 'GS' and team_b_elo == 1642:
             # print(f'Ro: {team_b_elo}, elo change: {-team_a_elo_change}')
             print(playsin_df.iloc[[i+1, i]])
         team_df.loc[team_df['id'] == playsin_df.iloc[i, 1], 'elo'] = team_a_elo + team_a_elo_change
