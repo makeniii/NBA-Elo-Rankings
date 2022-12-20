@@ -381,6 +381,7 @@ for season in cur.fetchall():
     cur.execute('''SELECT * FROM team''')
     team_df = pd.DataFrame(cur.fetchall(), columns=['id', 'name', 'short_name', 'abbreviation', 'elo'])
     team_df['elo'] = round(team_df['elo'] * 0.75 + 1500 * 0.25)
+    team_df = team_df.astype({"elo": int})
     
     for i in range(0, len(playsin_df), 2):
         team_a = team_df[team_df['id'] == playsin_df.iloc[i, 1]]
