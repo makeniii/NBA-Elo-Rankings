@@ -297,27 +297,31 @@ def create_nba_season_data(year, teams, progress, bar):
     return progress
 
 
+# years = [
+#     '2005',
+#     '2006',
+#     '2007',
+#     '2008',
+#     '2009',
+#     '2010',
+#     '2011',
+#     '2012',
+#     '2013',
+#     '2014',
+#     '2015',
+#     '2016',
+#     '2017',
+#     '2018',
+#     '2019',
+#     '2020',
+#     '2021',
+#     '2022',
+#     '2023'
+#     ]
+
 years = [
-    '2005',
-    '2006',
-    '2007',
-    '2008',
-    '2009',
-    '2010',
-    '2011',
-    '2012',
-    '2013',
-    '2014',
-    '2015',
-    '2016',
-    '2017',
-    '2018',
-    '2019',
-    '2020',
-    '2021',
-    '2022',
     '2023'
-    ]
+]
 
 widgets = [' [',
             progressbar.Timer(format= 'elapsed time: %(elapsed)s'),
@@ -377,9 +381,12 @@ for season in cur.fetchall():
     ''', (season[0],))
 
     playsin_df = pd.DataFrame(cur.fetchall(), columns=['game_id', 'team_id', 'score', 'location', 'outcome'])
+    print(playsin_df)
 
     cur.execute('''SELECT * FROM team''')
     team_df = pd.DataFrame(cur.fetchall(), columns=['id', 'name', 'short_name', 'abbreviation', 'elo'])
+    team_df['elo'] = round(team_df['elo'] * 0.75 + 1500 * 0.25)
+    print('\ncalcualting....\n')
 
     for i in range(0, len(playsin_df), 2):
         team_a = team_df[team_df['id'] == playsin_df.iloc[i, 1]]
