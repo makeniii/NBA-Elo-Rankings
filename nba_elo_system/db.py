@@ -297,7 +297,7 @@ def create_nba_season_data(year, teams, progress, bar):
     return progress
 
 
-# years = [
+years = [
     '2005',
     '2006',
     '2007',
@@ -317,11 +317,7 @@ def create_nba_season_data(year, teams, progress, bar):
     '2021',
     '2022',
     '2023'
-    # ]
-
-years = [
-    '2022'
-]
+    ]
 
 widgets = [' [',
             progressbar.Timer(format= 'elapsed time: %(elapsed)s'),
@@ -385,13 +381,6 @@ for season in cur.fetchall():
     cur.execute('''SELECT * FROM team''')
     team_df = pd.DataFrame(cur.fetchall(), columns=['id', 'name', 'short_name', 'abbreviation', 'elo'])
 
-    print()
-    print()
-    print(playsin_df)
-    print()
-    print(team_df)
-    print()
-
     for i in range(0, len(playsin_df), 2):
         team_a = team_df[team_df['id'] == playsin_df.iloc[i, 1]]
         team_b = team_df[team_df['id'] == playsin_df.iloc[i+1, 1]]
@@ -414,16 +403,9 @@ for season in cur.fetchall():
             )
         
         team_a_elo_change = Elo_Calculator.elo_change(team_a_elo, playsin_df.iloc[i]['outcome'], team_b_elo, playsin_df.iloc[i]['location'], mov)
-        if team_a.iloc[0]['abbreviation'] == 'GS' and team_a_elo == 1642:
-            # print(f'Ro: {team_a_elo}, elo change: {team_a_elo_change}')
-            print(playsin_df.iloc[[i, i+1]])
-        if team_b.iloc[0]['abbreviation'] == 'GS' and team_b_elo == 1642:
-            # print(f'Ro: {team_b_elo}, elo change: {-team_a_elo_change}')
-            print(playsin_df.iloc[[i+1, i]])
         team_df.loc[team_df['id'] == playsin_df.iloc[i, 1], 'elo'] = team_a_elo + team_a_elo_change
         team_df.loc[team_df['id'] == playsin_df.iloc[i+1, 1], 'elo'] = team_b_elo - team_a_elo_change
 
-    print()
-    print(team_df.sort_values('elo', ascending=False).reset_index(drop=True))
+    team_df.to_sql(name='team', con=con, if_exists='replace', index=False)
 
 con.close()
