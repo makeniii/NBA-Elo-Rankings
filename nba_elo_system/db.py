@@ -7,7 +7,7 @@ import sqlite3
 from sqlite3 import OperationalError
 from pathlib import Path
 import datetime
-from elo_calculator import Elo_Calculator
+from elo_calculator import EloCalculator
 
 def get_team(teams, team_key):
     for x in teams:
@@ -87,7 +87,7 @@ def create_nba_season_data(year, teams, progress, bar):
 
     cur.execute(
         '''UPDATE team SET elo = ROUND(elo * 0.75 + (:carry_over))''', 
-        {'carry_over': 0.25 * Elo_Calculator.elo_avg}
+        {'carry_over': 0.25 * EloCalculator.elo_avg}
     )
 
     con.commit()
@@ -297,31 +297,27 @@ def create_nba_season_data(year, teams, progress, bar):
     return progress
 
 
-# years = [
-#     '2005',
-#     '2006',
-#     '2007',
-#     '2008',
-#     '2009',
-#     '2010',
-#     '2011',
-#     '2012',
-#     '2013',
-#     '2014',
-#     '2015',
-#     '2016',
-#     '2017',
-#     '2018',
-#     '2019',
-#     '2020',
-#     '2021',
-#     '2022',
-#     '2023'
-#     ]
-
 years = [
+    '2005',
+    '2006',
+    '2007',
+    '2008',
+    '2009',
+    '2010',
+    '2011',
+    '2012',
+    '2013',
+    '2014',
+    '2015',
+    '2016',
+    '2017',
+    '2018',
+    '2019',
+    '2020',
+    '2021',
+    '2022',
     '2023'
-]
+    ]
 
 widgets = [' [',
             progressbar.Timer(format= 'elapsed time: %(elapsed)s'),
@@ -373,21 +369,19 @@ cur.execute('''SELECT * FROM season''')
 for season in cur.fetchall():
     cur.execute('''
     SELECT plays_in.game_id, plays_in.team_id, plays_in.score, plays_in.location, plays_in.outcome
-    FROM season
-    INNER JOIN game ON game.season_id = (?)
-    INNER JOIN plays_in ON game.id = plays_in.game_id
-    WHERE outcome NOT NULL
+    FROM plays_in
+    INNER JOIN game ON plays_in.game_id = game.id
+    WHERE game.season_id = (?)
+    AND plays_in.outcome IS NOT NULL
     ORDER BY game.date ASC
     ''', (season[0],))
 
     playsin_df = pd.DataFrame(cur.fetchall(), columns=['game_id', 'team_id', 'score', 'location', 'outcome'])
-    print(playsin_df)
 
     cur.execute('''SELECT * FROM team''')
     team_df = pd.DataFrame(cur.fetchall(), columns=['id', 'name', 'short_name', 'abbreviation', 'elo'])
     team_df['elo'] = round(team_df['elo'] * 0.75 + 1500 * 0.25)
-    print('\ncalcualting....\n')
-
+    
     for i in range(0, len(playsin_df), 2):
         team_a = team_df[team_df['id'] == playsin_df.iloc[i, 1]]
         team_b = team_df[team_df['id'] == playsin_df.iloc[i+1, 1]]
@@ -403,13 +397,13 @@ for season in cur.fetchall():
             RDiff = team_b_elo - team_a_elo
             margin = playsin_df.iloc[i+1]['score'] - playsin_df.iloc[i]['score']
 
-        mov = Elo_Calculator.margin_of_victory(
+        mov = EloCalculator.margin_of_victory(
                 margin,
                 RDiff,
                 playsin_df.iloc[i+winner]['location']
             )
         
-        team_a_elo_change = Elo_Calculator.elo_change(team_a_elo, playsin_df.iloc[i]['outcome'], team_b_elo, playsin_df.iloc[i]['location'], mov)
+        team_a_elo_change = EloCalculator.elo_change(team_a_elo, playsin_df.iloc[i]['outcome'], team_b_elo, playsin_df.iloc[i]['location'], mov)
         team_df.loc[team_df['id'] == playsin_df.iloc[i, 1], 'elo'] = team_a_elo + team_a_elo_change
         team_df.loc[team_df['id'] == playsin_df.iloc[i+1, 1], 'elo'] = team_b_elo - team_a_elo_change
 
