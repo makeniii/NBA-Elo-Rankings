@@ -679,4 +679,4 @@ Finally, I've renamed `elo_system.py` to `elo_calculator.py`. Removed all classe
 
 The time it takes to run `db.py` the first time is about 9 minutes, which is quite a while. Subsequent run times are about 6 minutes. Also, weirdly enough, `team.elo` is a float when queried from the front end. I've fixed it in jinja by just type casting `team.elo` to `int` but it's weird. Not sure why the database contraints aren't working or even the model contstraints. I fixed this by type casting `elo` in the `DataFrame` of the season games in `db.py`. Turns out it's because `round()` returns a `float` type.
 
-I've pushed the database branch to main.
+The last step before pushing to main, is to update the database with only new games that have an outcome.
