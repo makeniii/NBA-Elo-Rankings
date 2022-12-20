@@ -1,34 +1,34 @@
-DROP TABLE IF EXISTS Season;
-DROP TABLE IF EXISTS Game;
-DROP TABLE IF EXISTS PlaysIn;
-DROP TABLE IF EXISTS Team;
+DROP TABLE IF EXISTS season;
+DROP TABLE IF EXISTS game;
+DROP TABLE IF EXISTS plays_in;
+DROP TABLE IF EXISTS team;
 
-CREATE TABLE Season (
-    Year INTEGER PRIMARY KEY,
-    Name TEXT UNIQUE NOT NULL
+CREATE TABLE season (
+    year INTEGER PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL
 );
 
-CREATE TABLE Game (
-    ID INTEGER PRIMARY KEY,
-    SeasonID INTEGER NOT NULL,
-    Type TEXT NOT NULL,
-    Status INTEGER NOT NULL,
-    FOREIGN KEY (SeasonID) REFERENCES Season (Year)
+CREATE TABLE game (
+    id INTEGER PRIMARY KEY,
+    season_id INTEGER NOT NULL,
+    type TEXT NOT NULL,
+    status INTEGER NOT NULL,
+    FOREIGN KEY (season_id) REFERENCES season (year)
 );
 
-CREATE TABLE PlaysIn (
-    GameID INTEGER,
-    TeamID INTEGER,
-    Score INTEGER NOT NULL,
-    Location TEXT NOT NULL,
-    Outcome TEXT,
-    PRIMARY KEY (GameID, TeamID)
+CREATE TABLE plays_in (
+    game_id INTEGER,
+    team_id INTEGER,
+    score INTEGER NOT NULL,
+    location TEXT NOT NULL,
+    outcome TEXT,
+    PRIMARY KEY (game_id, team_id)
 );
 
-CREATE TABLE Team (
-    ID INTEGER PRIMARY KEY,
-    Name TEXT NOT NULL,
-    ShortName TEXT NOT NULL,
-    Abbreviation TEXT NOT NULL,
-    Elo INTEGER NOT NULL DEFAULT 1500
+CREATE TABLE team (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    short_name TEXT NOT NULL,
+    abbreviation TEXT NOT NULL,
+    elo INTEGER NOT NULL
 );
