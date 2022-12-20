@@ -10,3 +10,8 @@ season_21 = Season(2021, teams)
 season_21.schedule.initialise(season_21.year)
 season_21.initialise_team_schedules()
 season_21.initialise_team_elos()
+
+season_22 = Season(2022, teams)
+season_22.schedule.initialise(season_22.year)
+season_22.initialise_team_schedules()
+season_22.initialise_team_elos()
