@@ -90,12 +90,6 @@ def create_nba_season_data(year, teams, progress, bar):
         {'carry_over': 0.25 * Elo_Calculator.elo_avg}
     )
 
-    cur.execute("""SELECT * FROM team ORDER BY elo DESC""")
-
-    for team in cur.fetchall():
-        print(team)
-    
-
     con.commit()
     regular_season = '2'
     post_season = '3'
