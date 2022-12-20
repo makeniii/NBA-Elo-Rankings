@@ -226,7 +226,6 @@ def create_nba_season_data(year, teams, progress, bar):
             if game_id in game_table['id'].values:
                 continue
 
-            
             game_entry = pd.DataFrame(
                 [{
                     'id': game_id,
@@ -437,16 +436,18 @@ for i in range(0, len(game_list), 2):
             team_b_elo = team[elo]
     
     if game_list[i][outcome] == 'W':
-        mov = Elo_Calculator.margin_of_victory(
-            game_list[i][score] - game_list[i+1][score],
-            team_a_elo - team_b_elo,
-            game_list[i][location]
-        )
+        winner = 0
+        RDiff = team_a_elo - team_b_elo
+        margin = game_list[i][score] - game_list[i+1][score]
     else:
-        mov = Elo_Calculator.margin_of_victory(
-            game_list[i+1][score] - game_list[i][score],
-            team_b_elo - team_a_elo,
-            game_list[i+1][location]
+        winner = 1
+        RDiff = team_b_elo - team_a_elo
+        margin = game_list[i+1][score] - game_list[i][score]
+
+    mov = Elo_Calculator.margin_of_victory(
+            margin,
+            RDiff,
+            game_list[i+winner][location]
         )
     
     team_a_elo_tmp = team_a_elo
