@@ -205,6 +205,10 @@ class Season():
 
             # calculate new elo rating
             team_a_elo_change = Elo.calculate_elo_change(team_a.elo.get_elo(), games.iloc[i]['WL'], team_b.elo.elo, games.iloc[i]['LOCATION'], mov)
+            if team_a.abbreviation == 'GSW' and team_a.elo.elo == 1651:
+                print(games.iloc[[i, i+1]])
+            elif team_b.abbreviation == 'GSW' and team_b.elo.elo == 1651:
+                print(games.iloc[[i+1, i]])
             team_a.elo.update_elo(team_a_elo_change)
             team_b.elo.update_elo(-team_a_elo_change)
 
