@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from .. import elo_system
+from .. import elo_calculator
 from nba_api.stats.endpoints import leaguegamelog
 from nba_api.stats.static import teams as team_list
 
@@ -92,15 +92,15 @@ remove = set_col - (set_col & set_keepers)
 
 test_game_logs.drop(columns=remove, inplace=True)
 
-dummy_SeasonSchedule = elo_system.SeasonSchedule()
+dummy_SeasonSchedule = elo_calculator.SeasonSchedule()
 dummy_SeasonSchedule.add_games(test_game_logs)
 
-SeasonSchedule = elo_system.SeasonSchedule()
+SeasonSchedule = elo_calculator.SeasonSchedule()
 SeasonSchedule.initialise('2021')
 
 Teams = list()
 
 for team in team_list.get_teams():
-    Teams.append(elo_system.Team(team['full_name'], team['abbreviation']))
+    Teams.append(elo_calculator.Team(team['full_name'], team['abbreviation']))
 
-Season21 = elo_system.Season(2021, Teams)
+Season21 = elo_calculator.Season(2021, Teams)

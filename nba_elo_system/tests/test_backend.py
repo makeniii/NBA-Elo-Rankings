@@ -1,5 +1,5 @@
 import pytest
-from .. import elo_system
+from .. import elo_calculator
 import pandas as pd
 from pandas.testing import assert_frame_equal
 import nba_elo_system.tests.test_backend_data as test_data
@@ -20,7 +20,7 @@ def dummy_SeasonSchedule():
 
 @pytest.fixture
 def Elo():
-    Elo = elo_system.Elo()
+    Elo = elo_calculator.Elo()
     return Elo
 
 @pytest.fixture
@@ -74,7 +74,7 @@ def test_leaguegamelog():
 
     assert_frame_equal(logs, test_log)
 
-def test_sesaon_schedule_initialise_columns(SeasonSchedule: elo_system.SeasonSchedule):
+def test_sesaon_schedule_initialise_columns(SeasonSchedule: elo_calculator.SeasonSchedule):
     correct_columns = [
         'SEASON_ID',
         'TEAM_ABBREVIATION',
@@ -89,13 +89,13 @@ def test_sesaon_schedule_initialise_columns(SeasonSchedule: elo_system.SeasonSch
 
     assert SeasonSchedule.games.columns.tolist() == correct_columns
 
-def test_sesaon_schedule_initialise_index(SeasonSchedule: elo_system.SeasonSchedule):
+def test_sesaon_schedule_initialise_index(SeasonSchedule: elo_calculator.SeasonSchedule):
     correct_index = range(1, 1324)
     correct_list = [val for val in correct_index for _ in range(2)]
 
     assert SeasonSchedule.games.index.tolist() == correct_list
 
-def test_SeasonSchedule_initialise_correct_game_type(SeasonSchedule: elo_system.SeasonSchedule):
+def test_SeasonSchedule_initialise_correct_game_type(SeasonSchedule: elo_calculator.SeasonSchedule):
     for i in range(0, len(SeasonSchedule.games)):
         game_num = int(SeasonSchedule.games.iloc[i]['GAME_ID'])
 
@@ -115,7 +115,7 @@ def test_SeasonSchedule_initialise_correct_game_type(SeasonSchedule: elo_system.
         else:
             assert False
 
-def test_SeasonSchedule_initialise_correct_location(SeasonSchedule: elo_system.SeasonSchedule):
+def test_SeasonSchedule_initialise_correct_location(SeasonSchedule: elo_calculator.SeasonSchedule):
     for i in range(0, len(SeasonSchedule.games)):
         if 'vs.' in SeasonSchedule.games.iloc[i]['MATCHUP']:
             assert SeasonSchedule.games.iloc[i]['LOCATION'] == 'Home'
@@ -131,17 +131,17 @@ def test_SeasonSchedule(SeasonSchedule, dummy_SeasonSchedule):
     assert_frame_equal(SeasonSchedule.get_game(2), dummy_SeasonSchedule.games.iloc[[2, 3]])
 
 def test_Elo_win_expectancy_calc_home():
-    assert round(elo_system.Elo.win_expectancy_calc(1500, 1700, 'Home'), 4) == 0.3599
+    assert round(elo_calculator.Elo.win_expectancy_calc(1500, 1700, 'Home'), 4) == 0.3599
 
 def test_Elo_win_expectancy_calc_away():
     event_a = 0.3599
     event_b = 1 - event_a
-    assert round(elo_system.Elo.win_expectancy_calc(1700, 1500, 'Away'), 4) == event_b
+    assert round(elo_calculator.Elo.win_expectancy_calc(1700, 1500, 'Away'), 4) == event_b
 
 def test_margin_of_victory():
     RDiff = -118
     margin = 4
-    assert round(elo_system.Elo.margin_of_victory(margin, RDiff, 'Away'), 2) == 0.77
+    assert round(elo_calculator.Elo.margin_of_victory(margin, RDiff, 'Away'), 2) == 0.77
 
 def test_calculate_elo_winning_team():
     location = 'Home'
@@ -150,9 +150,9 @@ def test_calculate_elo_winning_team():
     margin = 4
     Ro = 1518
     RDiff = Ro - OPPRo
-    mov = elo_system.Elo.margin_of_victory(margin, RDiff, location)
+    mov = elo_calculator.Elo.margin_of_victory(margin, RDiff, location)
 
-    assert elo_system.Elo.calculate_elo(Ro, outcome, OPPRo, location, mov) == 1520
+    assert elo_calculator.Elo.calculate_elo(Ro, outcome, OPPRo, location, mov) == 1520
 
 def test_calculate_elo_losing_team():
     Ro = 1400
@@ -162,9 +162,9 @@ def test_calculate_elo_losing_team():
     outcome = 'L'
     margin = 4
     RDiff = OPPRo - Ro
-    mov = elo_system.Elo.margin_of_victory(margin, RDiff, location_win)
+    mov = elo_calculator.Elo.margin_of_victory(margin, RDiff, location_win)
 
-    assert elo_system.Elo.calculate_elo(Ro, outcome, OPPRo, location, mov) == 1398
+    assert elo_calculator.Elo.calculate_elo(Ro, outcome, OPPRo, location, mov) == 1398
 
 def test_Season_initialise_team_schedules(Season21, dummy_SeasonSchedule):
     Season21.schedule = dummy_SeasonSchedule
@@ -211,4 +211,4 @@ def test_Season_end_sesaon_non_changed_elo(Season21):
 def test_Season_given_empty_teams():
     empty = []
     with pytest.raises(Exception) as err_info:
-        season = elo_system.Season(2021, empty)
+        season = elo_calculator.Season(2021, empty)
