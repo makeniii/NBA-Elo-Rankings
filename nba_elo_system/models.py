@@ -15,6 +15,7 @@ class Game(db.Model):
     season_id = db.Column(db.Integer, db.ForeignKey('season.year'), nullable=False)
     type = db.Column(db.String(15), nullable=False)
     status = db.Column(db.Integer, nullable=False)
+    date = db.Column(db.Date, nullable=False)
     plays_in = db.relationship('PlaysIn', backref='game', lazy=True)
 
     def __repr__(self) -> str:
