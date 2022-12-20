@@ -416,10 +416,6 @@ for season in cur.fetchall():
         team_df.loc[team_df['id'] == playsin_df.iloc[i, 1], 'elo'] = team_a_elo + team_a_elo_change
         team_df.loc[team_df['id'] == playsin_df.iloc[i+1, 1], 'elo'] = team_b_elo - team_a_elo_change
 
-        if i == len(playsin_df) - 2:
-            print('At the end!')
-            print(playsin_df.tail(2))
-
     print()
     print(team_df.sort_values('elo', ascending=False).reset_index(drop=True))
 
