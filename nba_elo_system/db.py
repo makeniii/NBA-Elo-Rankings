@@ -90,7 +90,6 @@ def create_nba_season_data(year, teams, progress, bar):
         {'carry_over': 0.25 * EloCalculator.elo_avg}
     )
 
-    con.commit()
     regular_season = '2'
     post_season = '3'
     play_ins = '5'
@@ -148,12 +147,6 @@ def create_nba_season_data(year, teams, progress, bar):
         else:
             for i in range(6, 8):
                 playoff_teams.append(children['standings']['entries'][i]['team']['id'])
-
-    # print()
-    # for children in standings_json['children']:
-    #     for team in children['standings']['entries']:
-    #         print(team['stats'][8]['displayValue'] + '. ' + team['team']['displayName'])
-    #     print()
 
     schedule_json = json.loads('[]')
     index = -1
@@ -276,14 +269,6 @@ def create_nba_season_data(year, teams, progress, bar):
 
             playsin_table = pd.concat([playsin_table, pd.DataFrame([home, away])])
 
-    # print(season_table)
-    # print()
-    # print(team_table)
-    # print()
-    # print(game_table)
-    # print()
-    # print(playsin_table)
-
     season_table.to_sql(name='season', con=con, if_exists='append', index=False)
     game_table.to_sql(name='game', con=con, if_exists='append', index=False)
     playsin_table.to_sql(name='plays_in', con=con, if_exists='append', index=False)
@@ -291,9 +276,6 @@ def create_nba_season_data(year, teams, progress, bar):
     con.commit()
     con.close()
 
-    # print()
-    # print(year + ' SEASON COMPLETE - ' + str(len(playsin_table)) + ' GAMES COMPILIED')
-    # print()
     return progress
 
 
@@ -356,13 +338,9 @@ for team in data['sports'][0]['leagues'][0]['teams']:
 team_table.to_sql(name='team', con=con, if_exists='append', index=False)
 
 con.commit()
-con.close()
 
 for year in years:
     prog = create_nba_season_data(year, teams, prog, bar)
-
-con = sqlite3.connect(dbpath)
-cur = con.cursor()
 
 cur.execute('''SELECT * FROM season''')
 
