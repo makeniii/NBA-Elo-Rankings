@@ -411,12 +411,10 @@ for season in cur.fetchall():
                 playsin_df.iloc[i+winner]['location']
             )
         
-        team_a_elo_tmp = team_a_elo
-        team_a_elo = Elo_Calculator.elo(team_a_elo, playsin_df.iloc[i]['outcome'], team_b_elo, playsin_df.iloc[i]['location'], mov)
-        team_b_elo = Elo_Calculator.elo(team_b_elo, playsin_df.iloc[i+1]['outcome'], team_a_elo_tmp, playsin_df.iloc[i+1]['location'], mov)
+        team_a_elo_change = Elo_Calculator.elo_change(team_a_elo, playsin_df.iloc[i]['outcome'], team_b_elo, playsin_df.iloc[i]['location'], mov)
         
-        team_df.loc[team_df['id'] == playsin_df.iloc[i, 1], 'elo'] = team_a_elo
-        team_df.loc[team_df['id'] == playsin_df.iloc[i+1, 1], 'elo'] = team_b_elo
+        team_df.loc[team_df['id'] == playsin_df.iloc[i, 1], 'elo'] = team_a_elo + team_a_elo_change
+        team_df.loc[team_df['id'] == playsin_df.iloc[i+1, 1], 'elo'] = team_b_elo - team_a_elo_change
 
         if i == len(playsin_df) - 2:
             print('At the end!')
