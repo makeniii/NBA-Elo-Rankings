@@ -362,8 +362,7 @@ def create_nba_season_data(year, teams, progress, bar):
     # ]
 
 years = [
-    '2022',
-    '2023'
+    '2022'
 ]
 
 widgets = [' [',
