@@ -664,3 +664,19 @@ The next thing to do is to update the classes in `elo_system`. Since there is no
 # 15/12/22
 
 After some more thinking and research, it's best if I just use sqlalchemy to manage the database. This change means that `elo_system.py` is now depreciated. I'll probably keep it around because I still might use the NBA-api to get historical data since I can't with ESPN's.
+
+# 20/12/22
+
+Finally, after some time I've modified `db.py` to initialise team elo's using data from the 05' season all the way to the current date. Along the way, I found a bug. Let's go through it.
+
+One bug that I've found had to do with my first iteration. The first iteration used `NBA-api` to get data and I found that there was a problem with `GAME_ID`. The problem is that when a game is scheduled, `GAME_ID` is created. So, if a game were to be postponed, that would mean the game being played at a later date. Since the `gamelogs` were sorted by `GAME_ID`, the elo calculation would be too soon and not reflective of what their recent elo rating is. So, to fix this, I sorted by date when selecting the season games from the `plays_in` table. To sort by date, I modified my `game` table schema to include a date column.
+
+This is also the reason - probably - why I found another inconsistency. When calculating the elo of teams from the 22' season, using the first iteration system gave a different elo rating for teams than the new system. Again, due to how the games were sorted in the first iteration, it would not calculate the updated elo rating at the correct time which meant a cascade of differences between the two systems.
+
+Updating the front-end was simple and I found no problems at all.
+
+Finally, I've renamed `elo_system.py` to `elo_calculator.py`. Removed all classes from `elo_calculator.py` except for `Elo` which is now renamed as `EloCalculator`. Deciding to keep it as a class instead because there are variables that make more sense to access from a class than from an import... I think.
+
+The time it takes to run `db.py` the first time is about 9 minutes, which is quite a while. Subsequent run times are about 6 minutes. Also, weirdly enough, `team.elo` is a float when queried from the front end. I've fixed it in jinja by just type casting `team.elo` to `int` but it's weird. Not sure why the database contraints aren't working or even the model contstraints. I fixed this by type casting `elo` in the `DataFrame` of the season games in `db.py`. Turns out it's because `round()` returns a `float` type.
+
+I've pushed the database branch to main.
