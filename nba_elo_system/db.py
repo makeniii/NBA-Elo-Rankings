@@ -281,35 +281,9 @@ def create_nba_season_data(year, teams, progress, bar):
                 away_elo = cur.fetchone()[0]
 
                 if home['outcome'] == 'W':
-                    margin_of_victory = Elo_Calculator.margin_of_victory(
-                        home['score'] - away['score'],
-                        home_elo - away_elo,
-                        home['location']
-                    )
+                    margin_of_victory = Elo_Calculator.margin_of_victory(home['score'] - away['score'], home_elo - away_elo, home['location'])
                 else:
-                    margin_of_victory = Elo_Calculator.margin_of_victory(
-                        away['score'] - home['score'],
-                        away_elo - home_elo,
-                        away['location']
-                    )
-                
-                home_elo_tmp = home_elo
-
-                home_elo = Elo_Calculator.elo(
-                    home_elo,
-                    home['outcome'],
-                    away_elo,
-                    home['location'],
-                    margin_of_victory
-                )
-
-                away_elo = Elo_Calculator.elo(
-                    away_elo,
-                    away['outcome'],
-                    home_elo_tmp,
-                    away['location'],
-                    margin_of_victory
-                )
+                    margin_of_victory = Elo_Calculator.margin_of_victory(away['score'] - home['score'], away_elo - home_elo, away['location'])
 
                 cur.execute(
                     '''
@@ -317,7 +291,7 @@ def create_nba_season_data(year, teams, progress, bar):
                     SET elo = (:new_elo)
                     WHERE id = (:team_id)
                     ''',
-                    {'new_elo': home_elo, 'team_id': home['team_id']}
+                    {'new_elo': Elo_Calculator.elo(home_elo, home['outcome'], away_elo, home['location'], margin_of_victory), 'team_id': home['team_id']}
                     )
                 
                 cur.execute(
@@ -326,7 +300,7 @@ def create_nba_season_data(year, teams, progress, bar):
                     SET elo = (:new_elo)
                     WHERE id = (:team_id)
                     ''',
-                    {'new_elo': away_elo, 'team_id': away['team_id']}
+                    {'new_elo': Elo_Calculator.elo(away_elo, away['outcome'], home_elo, away['location'], margin_of_victory), 'team_id': away['team_id']}
                     )
             else:
                 home = pd.Series(
@@ -440,3 +414,50 @@ con.close()
 
 for year in years:
     prog = create_nba_season_data(year, teams, prog, bar)
+
+con = sqlite3.connect(dbpath)
+cur = con.cursor()
+
+cur.execute('''SELECT * FROM plays_in WHERE outcome NOT NULL ORDER BY game_id ASC''')
+game_list = list(map(list, cur.fetchall()))
+cur.execute('''SELECT * FROM team''')
+team_list = list(map(list, cur.fetchall()))
+con.close()
+team_id = 1
+elo = 4
+score = 2
+location = 3
+outcome = 4
+
+for i in range(0, len(game_list), 2):
+    for team in team_list:
+        if game_list[i][team_id] == team[0]:
+            team_a_elo = team[elo]
+        elif game_list[i+1][team_id] == team[0]:
+            team_b_elo = team[elo]
+    
+    if game_list[i][outcome] == 'W':
+        mov = Elo_Calculator.margin_of_victory(
+            game_list[i][score] - game_list[i+1][score],
+            team_a_elo - team_b_elo,
+            game_list[i][location]
+        )
+    else:
+        mov = Elo_Calculator.margin_of_victory(
+            game_list[i+1][score] - game_list[i][score],
+            team_b_elo - team_a_elo,
+            game_list[i+1][location]
+        )
+    
+    team_a_elo_tmp = team_a_elo
+    team_a_elo = Elo_Calculator.elo(team_a_elo, game_list[i][outcome], team_b_elo, game_list[i][location], mov)
+    team_b_elo = Elo_Calculator.elo(team_b_elo, game_list[i+1][outcome], team_a_elo_tmp, game_list[i+1][location], mov)
+    
+    for team in team_list:
+        if game_list[i][team_id] == team[0]:
+            team[elo] = team_a_elo
+        elif game_list[i+1][team_id] == team[0]:
+            team[elo] = team_b_elo
+
+for team in team_list:
+    print(team)
