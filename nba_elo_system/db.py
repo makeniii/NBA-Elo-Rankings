@@ -7,6 +7,7 @@ import sqlite3
 from sqlite3 import OperationalError
 from pathlib import Path
 import datetime
+from elo_calculator import Elo_Calculator
 
 def get_team(teams, team_key):
     for x in teams:
@@ -47,6 +48,7 @@ Game status - all strings
 3 = completed
 6 = postponed
 4/5 = ?
+22 = end of third quarter
 
 HomeTeam/AwayTeam Location  = Game['competitors'][0/1]['homeAway']
 HomeTeam/AwayTeam Outcome   = Game['competitors'][0/1]['winner']
@@ -79,6 +81,16 @@ standings['entries']['stats'] - has streak wins !!
 '''
 
 def create_nba_season_data(year, teams, progress, bar):
+    dbpath = Path(__file__).parent / 'nba.db'
+    con = sqlite3.connect(dbpath)
+    cur = con.cursor()
+
+    cur.execute(
+        '''UPDATE team SET elo = ROUND(elo * 0.75 + (:carry_over))''', 
+        {'carry_over': 0.25 * Elo_Calculator.elo_avg}
+    )
+
+    con.commit()
     regular_season = '2'
     post_season = '3'
     play_ins = '5'
@@ -105,8 +117,8 @@ def create_nba_season_data(year, teams, progress, bar):
     standings_json = requests.get('https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?season=' + year + '&sort=playoffseed').json()
     season_table = pd.DataFrame(
         [{
-            'Year': int(year),
-            'Name': year_name
+            'year': int(year),
+            'name': year_name
         }]
     )
 
@@ -188,7 +200,7 @@ def create_nba_season_data(year, teams, progress, bar):
         progress += 1000
 
     playsin_table = pd.DataFrame()
-    game_table = pd.DataFrame(columns=['ID', 'SeasonID', 'Type', 'Status'])
+    game_table = pd.DataFrame(columns=['id', 'season_id', 'type', 'status'])
 
     for season in schedule_json:
         season_type = season['requestedSeason']['name']
@@ -205,67 +217,134 @@ def create_nba_season_data(year, teams, progress, bar):
             
             game_id = int(game['id'])
 
-            if game_id in game_table['ID'].values:
+            if game_id in game_table['id'].values:
                 continue
+
             
             game_entry = pd.DataFrame(
                 [{
-                    'ID': game_id,
-                    'SeasonID': season_year,
-                    'Type': season_type,
-                    'Status': int(game_status)
+                    'id': game_id,
+                    'season_id': season_year,
+                    'type': season_type,
+                    'status': int(game_status)
                 }]
             )
 
             game_table = pd.concat([game_table, game_entry])
 
             if game_status == '3':
-                home = pd.DataFrame(
-                    [{
-                        'GameID': game_id,
-                        'TeamID': int(game['competitors'][0]['id']),
-                        'Score': int(game['competitors'][0]['score']['value']),
-                        'Location': game['competitors'][0]['homeAway'],
-                        'Outcome': 'W' if game['competitors'][0]['winner'] else 'L'
-                    }]
+                home = pd.Series(
+                    {
+                        'game_id': game_id,
+                        'team_id': int(game['competitors'][0]['id']),
+                        'score': int(game['competitors'][0]['score']['value']),
+                        'location': game['competitors'][0]['homeAway'],
+                        'outcome': 'W' if game['competitors'][0]['winner'] else 'L'
+                    }
                 )
 
-                away = pd.DataFrame(
-                    [{
-                        'GameID': game_id,
-                        'TeamID': int(game['competitors'][1]['id']),
-                        'Score': int(game['competitors'][1]['score']['value']),
-                        'Location': game['competitors'][1]['homeAway'],
-                        'Outcome': 'W' if game['competitors'][1]['winner'] else 'L'
-                    }]
+                away = pd.Series(
+                    {
+                        'game_id': game_id,
+                        'team_id': int(game['competitors'][1]['id']),
+                        'score': int(game['competitors'][1]['score']['value']),
+                        'location': game['competitors'][1]['homeAway'],
+                        'outcome': 'W' if game['competitors'][1]['winner'] else 'L'
+                    }
                 )
 
-                playsin_table = pd.concat([playsin_table, home, away])
-            elif game_status == '1' or game_status == '2':
-                home = pd.DataFrame(
-                    [{
-                        'GameID': game_id,
-                        'TeamID': int(game['competitors'][0]['id']),
-                        'Score': 0,
-                        'Location': game['competitors'][0]['homeAway'],
-                        'Outcome': None
-                    }]
+                
+                cur.execute(
+                    '''
+                    SELECT elo
+                    FROM team
+                    WHERE id = (?)
+                    ''', 
+                    (home['team_id'],)
                 )
 
-                away = pd.DataFrame(
-                    [{
-                        'GameID': game_id,
-                        'TeamID': int(game['competitors'][1]['id']),
-                        'Score': 0,
-                        'Location': game['competitors'][1]['homeAway'],
-                        'Outcome': None
-                    }]
+                home_elo = cur.fetchone()[0]
+                cur.execute(
+                    '''
+                    SELECT elo
+                    FROM team
+                    WHERE id = (?)
+                    ''', 
+                    (away['team_id'],)
                 )
 
-                playsin_table = pd.concat([playsin_table, home, away])
+                away_elo = cur.fetchone()[0]
+
+                if home['outcome'] == 'W':
+                    margin_of_victory = Elo_Calculator.margin_of_victory(
+                        home['score'] - away['score'],
+                        home_elo - away_elo,
+                        home['location']
+                    )
+                else:
+                    margin_of_victory = Elo_Calculator.margin_of_victory(
+                        away['score'] - home['score'],
+                        away_elo - home_elo,
+                        away['location']
+                    )
+                
+                home_elo_tmp = home_elo
+
+                home_elo = Elo_Calculator.elo(
+                    home_elo_tmp,
+                    home['outcome'],
+                    away_elo,
+                    home['location'],
+                    margin_of_victory
+                )
+
+                away_elo = Elo_Calculator.elo(
+                    away_elo,
+                    away['outcome'],
+                    home_elo_tmp,
+                    away['location'],
+                    margin_of_victory
+                )
+
+                cur.execute(
+                    '''
+                    UPDATE team
+                    SET elo = (:new_elo)
+                    WHERE id = (:team_id)
+                    ''',
+                    {'new_elo': home_elo, 'team_id': home['team_id']}
+                    )
+                
+                cur.execute(
+                    '''
+                    UPDATE team
+                    SET elo = (:new_elo)
+                    WHERE id = (:team_id)
+                    ''',
+                    {'new_elo': away_elo, 'team_id': away['team_id']}
+                    )
             else:
-                print('game status: ' + game_status + '. What to do?')
+                home = pd.Series(
+                    {
+                        'game_id': game_id,
+                        'team_id': int(game['competitors'][0]['id']),
+                        'score': 0,
+                        'location': game['competitors'][0]['homeAway'],
+                        'outcome': None
+                    }
+                )
 
+                away = pd.Series(
+                    {
+                        'game_id': game_id,
+                        'team_id': int(game['competitors'][1]['id']),
+                        'score': 0,
+                        'location': game['competitors'][1]['homeAway'],
+                        'outcome': None
+                    }
+                )
+
+            playsin_table = pd.concat([playsin_table, pd.DataFrame([home, away])])
 
     # print(season_table)
     # print()
@@ -275,12 +354,11 @@ def create_nba_season_data(year, teams, progress, bar):
     # print()
     # print(playsin_table)
 
-    dbpath = Path(__file__).parent / 'nba.db'
-    con = sqlite3.connect(dbpath)
+    # calculate elo ratings
 
-    season_table.to_sql(name='Season', con=con, if_exists='append', index=False)
-    game_table.to_sql(name='Game', con=con, if_exists='append', index=False)
-    playsin_table.to_sql(name='PlaysIn', con=con, if_exists='append', index=False)
+    season_table.to_sql(name='season', con=con, if_exists='append', index=False)
+    game_table.to_sql(name='game', con=con, if_exists='append', index=False)
+    playsin_table.to_sql(name='plays_in', con=con, if_exists='append', index=False)
 
     con.commit()
     con.close()
@@ -291,7 +369,7 @@ def create_nba_season_data(year, teams, progress, bar):
     return progress
 
 
-years = [
+# years = [
     '2005',
     '2006',
     '2007',
@@ -311,7 +389,12 @@ years = [
     '2021',
     '2022',
     '2023'
-    ]
+    # ]
+
+years = [
+    '2022',
+    '2023'
+]
 
 widgets = [' [',
             progressbar.Timer(format= 'elapsed time: %(elapsed)s'),
@@ -339,15 +422,15 @@ for team in data['sports'][0]['leagues'][0]['teams']:
     teams.append(team['team'])
     team_table = pd.concat([team_table, pd.DataFrame(
         [{
-            'ID': int(team['team']['id']),
-            'Name': team['team']['displayName'],
-            'ShortName': team['team']['shortDisplayName'],
-            'Abbreviation': team['team']['abbreviation'],
-            'Elo': 1500
+            'id': int(team['team']['id']),
+            'name': team['team']['displayName'],
+            'short_name': team['team']['shortDisplayName'],
+            'abbreviation': team['team']['abbreviation'],
+            'elo': 1500
         }]
     )])
 
-team_table.to_sql(name='Team', con=con, if_exists='append', index=False)
+team_table.to_sql(name='team', con=con, if_exists='append', index=False)
 
 con.commit()
 con.close()
