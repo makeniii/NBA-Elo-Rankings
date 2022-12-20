@@ -13,6 +13,7 @@ CREATE TABLE game (
     season_id INTEGER NOT NULL,
     type TEXT NOT NULL,
     status INTEGER NOT NULL,
+    date DATE NOT NULL,
     FOREIGN KEY (season_id) REFERENCES season (year)
 );
 

@@ -225,7 +225,8 @@ def create_nba_season_data(year, teams, progress, bar):
                     'id': game_id,
                     'season_id': season_year,
                     'type': season_type,
-                    'status': int(game_status)
+                    'status': int(game_status),
+                    'date': game['date'][:-7]
                 }]
             )
 
@@ -376,6 +377,7 @@ for season in cur.fetchall():
     INNER JOIN game ON game.season_id = (?)
     INNER JOIN plays_in ON game.id = plays_in.game_id
     WHERE outcome NOT NULL
+    ORDER BY game.date ASC
     ''', (season[0],))
 
     playsin_df = pd.DataFrame(cur.fetchall(), columns=['game_id', 'team_id', 'score', 'location', 'outcome'])
@@ -412,7 +414,12 @@ for season in cur.fetchall():
             )
         
         team_a_elo_change = Elo_Calculator.elo_change(team_a_elo, playsin_df.iloc[i]['outcome'], team_b_elo, playsin_df.iloc[i]['location'], mov)
-        
+        if team_a.iloc[0]['abbreviation'] == 'GS' and team_a_elo == 1651:
+            # print(f'Ro: {team_a_elo}, elo change: {team_a_elo_change}')
+            print(playsin_df.iloc[[i, i+1]])
+        if team_b.iloc[0]['abbreviation'] == 'GS' and team_b_elo == 1651:
+            # print(f'Ro: {team_b_elo}, elo change: {-team_a_elo_change}')
+            print(playsin_df.iloc[[i+1, i]])
         team_df.loc[team_df['id'] == playsin_df.iloc[i, 1], 'elo'] = team_a_elo + team_a_elo_change
         team_df.loc[team_df['id'] == playsin_df.iloc[i+1, 1], 'elo'] = team_b_elo - team_a_elo_change
 
