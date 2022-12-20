@@ -252,49 +252,6 @@ def create_nba_season_data(year, teams, progress, bar):
                     }
                 )
 
-                cur.execute(
-                    '''
-                    SELECT elo
-                    FROM team
-                    WHERE id = (?)
-                    ''', 
-                    (home['team_id'],)
-                )
-
-                home_elo = cur.fetchone()[0]
-                cur.execute(
-                    '''
-                    SELECT elo
-                    FROM team
-                    WHERE id = (?)
-                    ''', 
-                    (away['team_id'],)
-                )
-
-                away_elo = cur.fetchone()[0]
-
-                if home['outcome'] == 'W':
-                    margin_of_victory = Elo_Calculator.margin_of_victory(home['score'] - away['score'], home_elo - away_elo, home['location'])
-                else:
-                    margin_of_victory = Elo_Calculator.margin_of_victory(away['score'] - home['score'], away_elo - home_elo, away['location'])
-
-                cur.execute(
-                    '''
-                    UPDATE team
-                    SET elo = (:new_elo)
-                    WHERE id = (:team_id)
-                    ''',
-                    {'new_elo': Elo_Calculator.elo(home_elo, home['outcome'], away_elo, home['location'], margin_of_victory), 'team_id': home['team_id']}
-                    )
-                
-                cur.execute(
-                    '''
-                    UPDATE team
-                    SET elo = (:new_elo)
-                    WHERE id = (:team_id)
-                    ''',
-                    {'new_elo': Elo_Calculator.elo(away_elo, away['outcome'], home_elo, away['location'], margin_of_victory), 'team_id': away['team_id']}
-                    )
             else:
                 home = pd.Series(
                     {
@@ -410,48 +367,62 @@ for year in years:
 con = sqlite3.connect(dbpath)
 cur = con.cursor()
 
-cur.execute('''SELECT * FROM plays_in WHERE outcome NOT NULL ORDER BY game_id ASC''')
-game_list = list(map(list, cur.fetchall()))
-cur.execute('''SELECT * FROM team''')
-team_list = list(map(list, cur.fetchall()))
+cur.execute('''SELECT * FROM season''')
+
+for season in cur.fetchall():
+    cur.execute('''
+    SELECT plays_in.game_id, plays_in.team_id, plays_in.score, plays_in.location, plays_in.outcome
+    FROM season
+    INNER JOIN game ON game.season_id = (?)
+    INNER JOIN plays_in ON game.id = plays_in.game_id
+    WHERE outcome NOT NULL
+    ''', (season[0],))
+
+    playsin_df = pd.DataFrame(cur.fetchall(), columns=['game_id', 'team_id', 'score', 'location', 'outcome'])
+
+    cur.execute('''SELECT * FROM team''')
+    team_df = pd.DataFrame(cur.fetchall(), columns=['id', 'name', 'short_name', 'abbreviation', 'elo'])
+
+    print()
+    print()
+    print(playsin_df)
+    print()
+    print(team_df)
+    print()
+
+    for i in range(0, len(playsin_df), 2):
+        team_a = team_df[team_df['id'] == playsin_df.iloc[i, 1]]
+        team_b = team_df[team_df['id'] == playsin_df.iloc[i+1, 1]]
+        team_a_elo = team_a.iloc[0]['elo']
+        team_b_elo = team_b.iloc[0]['elo']
+
+        if playsin_df.iloc[i]['outcome'] == 'W':
+            winner = 0
+            RDiff = team_a_elo - team_b_elo
+            margin = playsin_df.iloc[i]['score'] - playsin_df.iloc[i+1]['score']
+        else:
+            winner = 1
+            RDiff = team_b_elo - team_a_elo
+            margin = playsin_df.iloc[i+1]['score'] - playsin_df.iloc[i]['score']
+
+        mov = Elo_Calculator.margin_of_victory(
+                margin,
+                RDiff,
+                playsin_df.iloc[i+winner]['location']
+            )
+        
+        team_a_elo_tmp = team_a_elo
+        team_a_elo = Elo_Calculator.elo(team_a_elo, playsin_df.iloc[i]['outcome'], team_b_elo, playsin_df.iloc[i]['location'], mov)
+        team_b_elo = Elo_Calculator.elo(team_b_elo, playsin_df.iloc[i+1]['outcome'], team_a_elo_tmp, playsin_df.iloc[i+1]['location'], mov)
+        
+        team_df.loc[team_df['id'] == playsin_df.iloc[i, 1], 'elo'] = team_a_elo
+        team_df.loc[team_df['id'] == playsin_df.iloc[i+1, 1], 'elo'] = team_b_elo
+
+        if i == len(playsin_df) - 2:
+            print('At the end!')
+            print(playsin_df.tail(2))
+
+    print()
+    print(team_df.sort_values('elo', ascending=False).reset_index(drop=True))
+
 con.close()
-team_id = 1
-elo = 4
-score = 2
-location = 3
-outcome = 4
-
-for i in range(0, len(game_list), 2):
-    for team in team_list:
-        if game_list[i][team_id] == team[0]:
-            team_a_elo = team[elo]
-        elif game_list[i+1][team_id] == team[0]:
-            team_b_elo = team[elo]
-    
-    if game_list[i][outcome] == 'W':
-        winner = 0
-        RDiff = team_a_elo - team_b_elo
-        margin = game_list[i][score] - game_list[i+1][score]
-    else:
-        winner = 1
-        RDiff = team_b_elo - team_a_elo
-        margin = game_list[i+1][score] - game_list[i][score]
-
-    mov = Elo_Calculator.margin_of_victory(
-            margin,
-            RDiff,
-            game_list[i+winner][location]
-        )
-    
-    team_a_elo_tmp = team_a_elo
-    team_a_elo = Elo_Calculator.elo(team_a_elo, game_list[i][outcome], team_b_elo, game_list[i][location], mov)
-    team_b_elo = Elo_Calculator.elo(team_b_elo, game_list[i+1][outcome], team_a_elo_tmp, game_list[i+1][location], mov)
-    
-    for team in team_list:
-        if game_list[i][team_id] == team[0]:
-            team[elo] = team_a_elo
-        elif game_list[i+1][team_id] == team[0]:
-            team[elo] = team_b_elo
-
-for team in team_list:
-    print(team)
