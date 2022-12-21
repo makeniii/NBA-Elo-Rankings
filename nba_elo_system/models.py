@@ -16,6 +16,7 @@ class Game(db.Model):
     type = db.Column(db.String(15), nullable=False)
     status = db.Column(db.Integer, nullable=False)
     date = db.Column(db.Date, nullable=False)
+    is_calculation_required = db.Column(db.Boolean, nullable=False)
     plays_in = db.relationship('PlaysIn', backref='game', lazy=True)
 
     def __repr__(self) -> str:
