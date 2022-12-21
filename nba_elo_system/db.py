@@ -8,7 +8,17 @@ from sqlite3 import OperationalError
 from pathlib import Path
 import datetime
 import os
-from nba_elo_system.elo_calculator import EloCalculator
+
+
+if __name__ == '__main__':
+    from elo_calculator import EloCalculator
+    
+else:
+    from nba_elo_system.elo_calculator import EloCalculator
+
+
+FORCE_INIT = False
+
 
 def get_team(teams, team_key):
     for x in teams:
@@ -547,3 +557,10 @@ def update_db(dbpath):
 
     con.commit()
     con.close()
+
+if __name__ == '__main__':
+    dbpath = Path(__file__).parent / 'nba.db'
+    if os.path.isfile(dbpath) and not FORCE_INIT:
+        update_db(dbpath)
+    else:
+        initialise_db(dbpath)
