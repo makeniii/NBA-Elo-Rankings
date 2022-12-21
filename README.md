@@ -23,6 +23,12 @@ pip install -r requirements.txt
 
 ## Usage
 
+Please be aware, when first starting the server, initialising the SQLite database takse approximately 8 minutes on my machine. Times may vary on different machines. There is a progress bar which roughly displays the time taken and the ETA. It looks like the following,
+
+```bash
+[elapsed time: 0:05:48] |*********************************************                | (ETA:  0:01:48)
+```
+
 ### Windows
 
 To run the server:
