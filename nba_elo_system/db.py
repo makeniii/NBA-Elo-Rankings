@@ -7,8 +7,15 @@ import sqlite3
 from sqlite3 import OperationalError
 from pathlib import Path
 import datetime
-from nba_elo_system.elo_calculator import EloCalculator
 import os
+
+if __name__ == '__main__':
+    from elo_calculator import EloCalculator
+    
+else:
+    from nba_elo_system.elo_calculator import EloCalculator
+
+force_init = False
 
 def get_team(teams, team_key):
     for x in teams:
@@ -220,7 +227,8 @@ def create_nba_season_data(year, teams, progress, bar):
                     'season_id': season_year,
                     'type': season_type,
                     'status': int(game_status),
-                    'date': game['date'][:-7]
+                    'date': game['date'][:-7],
+                    'is_calculation_required': 1
                 }]
             )
 
@@ -385,9 +393,76 @@ def initialise_db(dbpath):
             team_a_elo_change = EloCalculator.elo_change(team_a_elo, playsin_df.iloc[i]['outcome'], team_b_elo, playsin_df.iloc[i]['location'], mov)
             team_df.loc[team_df['id'] == playsin_df.iloc[i, 1], 'elo'] = team_a_elo + team_a_elo_change
             team_df.loc[team_df['id'] == playsin_df.iloc[i+1, 1], 'elo'] = team_b_elo - team_a_elo_change
+            game_id = playsin_df.iloc[i]['game_id']
+            cur.execute('''UPDATE game SET is_calculation_required = 0 WHERE id = (?)''', (int(game_id),))
 
         team_df.to_sql(name='team', con=con, if_exists='replace', index=False)
 
+    con.close()
+
+
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+
+
+def calculate_elos(dbpath, game_ids):
+    con = sqlite3.connect(dbpath)
+    con.row_factory = dict_factory
+    cur = con.cursor()
+
+    for game_id in game_ids:
+        cur.execute('''
+        SELECT plays_in.game_id, plays_in.team_id, plays_in.score, plays_in.location, plays_in.outcome
+        FROM plays_in
+        INNER JOIN game ON plays_in.game_id = game.id
+        WHERE game.id = (?)
+        AND game.is_calculation_required = 1
+        ''', (game_id,))
+        
+        if cur.rowcount == -1:
+            continue
+
+        team_a, team_b = cur.fetchall()
+
+        cur.execute('''SELECT elo FROM team WHERE id = (?)''', (team_a['team_id'],))
+        team_a_elo = cur.fetchone()['elo']
+
+        cur.execute('''SELECT elo FROM team WHERE id = (?)''', (team_b['team_id'],))
+        team_b_elo = cur.fetchone()['elo']
+
+        if team_a['outcome'] == 'W':
+            RDiff = team_a_elo - team_b_elo
+            margin = team_a['score'] - team_b['score']
+            location = team_a['location']
+        else:
+            RDiff = team_b_elo - team_a_elo
+            margin = team_b['score'] - team_a['score']
+            location = team_b['location']
+
+        mov = EloCalculator.margin_of_victory(
+            margin,
+            RDiff,
+            location
+        )
+
+        team_a_elo_change = EloCalculator.elo_change(
+            team_a_elo,
+            team_a['outcome'],
+            team_b_elo,
+            team_a['location'],
+            mov
+        )
+
+        team_a_elo = team_a_elo + team_a_elo_change
+        team_b_elo = team_b_elo - team_a_elo_change
+        cur.execute('''UPDATE team SET elo = (?) WHERE id = (?)''', (team_a_elo, team_a['id'],))
+        cur.execute('''UPDATE team SET elo = (?) WHERE id = (?)''', (team_b_elo, team_b['id'],))
+        cur.execute('''UPDATE game SET is_calculation_required = 0 WHERE id = (?)''', (game_id))
+    
+    con.commit()
     con.close()
 
 
@@ -412,9 +487,13 @@ def update_db(dbpath):
         print(' * Updating DB ...')
         date = str(date).replace('-','')
         curr_date = str(curr_date).replace('-','')
-                
-
-        data = requests.get('http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?&dates=' + date + '-' + curr_date).json()
+        data = requests.get(
+            'http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?&dates='
+            + date
+            + '-' 
+            + curr_date
+        ).json()
+        
         game_table = list()
         playsin_table = list()
 
@@ -469,6 +548,8 @@ def update_db(dbpath):
         #     print(plays_in['score'], plays_in['outcome'], plays_in['game_id'], plays_in['team_id'])
         # print(f"\nUpdates to 'plays_in' made: {True if cur.rowcount else False}")
 
+        calculate_elos(dbpath, [dictionary['id'] for dictionary in game_table])
+
         print(' * ...Done!')
 
     con.commit()
@@ -477,7 +558,7 @@ def update_db(dbpath):
 
 if __name__ == '__main__':
     dbpath = Path(__file__).parent / 'nba.db'
-    if os.path.isfile(dbpath):
+    if os.path.isfile(dbpath) and not force_init:
         update_db(dbpath)
     else:
         initialise_db(dbpath)
