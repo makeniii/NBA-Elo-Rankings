@@ -680,3 +680,29 @@ Finally, I've renamed `elo_system.py` to `elo_calculator.py`. Removed all classe
 The time it takes to run `db.py` the first time is about 9 minutes, which is quite a while. Subsequent run times are about 6 minutes. Also, weirdly enough, `team.elo` is a float when queried from the front end. I've fixed it in jinja by just type casting `team.elo` to `int` but it's weird. Not sure why the database contraints aren't working or even the model contstraints. I fixed this by type casting `elo` in the `DataFrame` of the season games in `db.py`. Turns out it's because `round()` returns a `float` type.
 
 The last step before pushing to main, is to update the database with only new games that have an outcome. I was able to get the code done for updating the table up til the current date. Just hasn't been tested yet...
+
+# 21/12/22
+
+Updating the database seems to be working as expected. I decided not to use a `DataFrame` but just a list of dicts because it's much less memory bloating for something simple. I also found a weird bug that when I casted `row['status']` from `iterrows()`, it would change the date somehow even though it was set several lines before. That would result in fetching more games in the return json. Really weird behaviour and I'm not sure why it happened.
+
+But anyways, last, last thing before I push to main, is to figure out if there is a way to call `db.py` to update everytime the web app is started.
+
+So, I've completed that, but I just realised that I need to update the elo's too... and doing so seems like a much bigger task. I think that I should add a flag variable named `is_calculation_required` to the game table. Now, I can have a seperate function for calculating elo's and don't have to rely on `pandas` to help with the calculation anymore. But, I probably won't change it til later.
+
+Added `calculate_elos()` to `db.py` that calculates the new elo rating for the given `game_ids`. Also, from the `run.py` file, it is able to both create and update the db. Now I only have to run `run.py`. The `db.py` file also contains a little work around to an annoying problem. So, if I run `run.py`, I have to use
+```
+from nba_elo_system.elo_calculator import EloCalculator
+```
+to import that class. Whereas when I run `db.py`, I have to use
+```
+from elo_calculator import EloCalculator
+```
+to import. So, what I've done is add this
+```
+if __name__ == '__main__':
+    from elo_calculator import EloCalculator
+    
+else:
+    from nba_elo_system.elo_calculator import EloCalculator
+```
+to the top of the file. I've removed this from the version that is pushed to the main branch though. It is only going to be used when debugging and testing needs to be done. Also, I have a global variable `force_init` for debugging and testing too. Basically, when set to true, when I run `db.py`, it will always run `initialise_db()` whereas when it's false, it will always run `update_db()`. I also deleted 'main' because `db.py` is not supposed to be run. Again, it is kept in the database branch version for testing/debugging.
