@@ -7,7 +7,7 @@ import sqlite3
 from sqlite3 import OperationalError
 from pathlib import Path
 import datetime
-from elo_calculator import EloCalculator
+from nba_elo_system.elo_calculator import EloCalculator
 import os
 
 def get_team(teams, team_key):
@@ -391,89 +391,93 @@ def initialise_db(dbpath):
     con.close()
 
 
+def update_db(dbpath):
+    date = datetime.datetime.today() - datetime.timedelta(days=1, hours=15)
+    curr_date = date.date()
+
+    con = sqlite3.connect(dbpath)
+    cur = con.cursor()
+
+    cur.execute(
+        '''
+        SELECT date FROM game WHERE status = 3 ORDER BY date DESC
+        '''
+    )
+
+    date = cur.fetchone()[0]
+    date = datetime.datetime.strptime(date, '%Y-%m-%d').date() - datetime.timedelta(days=1)
+    # print(curr_date, date)
+
+    if curr_date >= date:
+        print(' * Updating DB ...')
+        date = str(date).replace('-','')
+        curr_date = str(curr_date).replace('-','')
+                
+
+        data = requests.get('http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?&dates=' + date + '-' + curr_date).json()
+        game_table = list()
+        playsin_table = list()
+
+        for event in data['events']:
+            game = event['competitions'][0]
+            game_status = game['status']['type']['id']
+            
+            game_id = int(game['id'])
+
+            game_entry = {
+                'id': game_id,
+                'status': int(game_status)
+            }
+
+            game_table.append(game_entry)
+
+            if game_status == '3':
+                home = {
+                    'game_id': game_id,
+                    'team_id': int(game['competitors'][0]['id']),
+                    'score': int(game['competitors'][0]['score']),
+                    'outcome': 'W' if game['competitors'][0]['winner'] else 'L'
+                }
+
+                away = {
+                        'game_id': game_id,
+                        'team_id': int(game['competitors'][1]['id']),
+                        'score': int(game['competitors'][1]['score']),
+                        'outcome': 'W' if game['competitors'][1]['winner'] else 'L'
+                }
+
+            playsin_table.append(home)
+            playsin_table.append(away)
+
+        # print('game updates:\n')
+        for game in game_table:
+            cur.execute("""
+            UPDATE game
+            SET status = (?)
+            WHERE id = (?)
+            """, (game['status'], game['id'],))
+        #     print(game['status'], game['id'])
+        # print(f"\nUpdates to 'game' made: {True if cur.rowcount else False}")
+        
+        # print('\nplays_in updates\n')
+        for plays_in in playsin_table:
+            cur.execute("""
+            UPDATE plays_in
+            SET score = (?), outcome = (?)
+            WHERE game_id = (?) AND team_id = (?)
+            """, (plays_in['score'], plays_in['outcome'], plays_in['game_id'], plays_in['team_id'],))
+        #     print(plays_in['score'], plays_in['outcome'], plays_in['game_id'], plays_in['team_id'])
+        # print(f"\nUpdates to 'plays_in' made: {True if cur.rowcount else False}")
+
+        print(' * ...Done!')
+
+    con.commit()
+    con.close()
+
+
 if __name__ == '__main__':
     dbpath = Path(__file__).parent / 'nba.db'
     if os.path.isfile(dbpath):
-        date = datetime.datetime.today() - datetime.timedelta(days=1, hours=15)
-        curr_date = date.date()
-
-        con = sqlite3.connect(dbpath)
-        cur = con.cursor()
-
-        cur.execute(
-            '''
-            SELECT date FROM game WHERE status = 3 ORDER BY date DESC
-            '''
-        )
-
-        date = cur.fetchone()[0]
-        date = datetime.datetime.strptime(date, '%Y-%m-%d').date() - datetime.timedelta(days=1)
-
-        if curr_date > date:
-            date = date.replace('-','')
-            curr_date = curr_date.replace('-','')
-
-            print(date)
-            print(curr_date)
-
-            data = requests.get('http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?&dates=' + date + '-' + curr_date).json()
-            game_table = pd.DataFrame()
-            playsin_table = pd.DataFrame()
-
-            for event in data['events']:
-                game = event['competitions'][0]
-                game_status = game['status']['type']['id']
-                
-                game_id = int(game['id'])
-
-                game_entry = pd.DataFrame(
-                    [{
-                        'id': game_id,
-                        'status': int(game_status)
-                    }]
-                )
-
-                game_table = pd.concat([game_table, game_entry])
-
-                if game_status == '3':
-                    home = pd.Series(
-                        {
-                            'game_id': game_id,
-                            'team_id': int(game['competitors'][0]['id']),
-                            'score': int(game['competitors'][0]['score']),
-                            'outcome': 'W' if game['competitors'][0]['winner'] else 'L'
-                        }
-                    )
-
-                    away = pd.Series(
-                        {
-                            'game_id': game_id,
-                            'team_id': int(game['competitors'][1]['id']),
-                            'score': int(game['competitors'][1]['score']),
-                            'outcome': 'W' if game['competitors'][1]['winner'] else 'L'
-                        }
-                    )
-
-                playsin_table = pd.concat([playsin_table, pd.DataFrame([home, away])])
-
-            for index, row in game_table.iterrows():
-                cur.execute("""
-                UPDATE game
-                SET status = (?)
-                WHERE id = (?)
-                """, (row['status'], row['id'],))
-            
-            for index, row in playsin_table.iterrows():
-                cur.execute("""
-                UPDATE plays_in
-                SET score = (?), outcome = (?)
-                WHERE game_id = (?) AND team_id = (?)
-                """, (row['score'], row['outcome'], row['game_id'], row['team_id'],))
-            
-            print(f"{len(game_table)} Updates to 'game'")
-            print(f"{len(playsin_table)} Updates to 'plays_in'")
-
-        con.commit()
-        con.close()
+        update_db(dbpath)
     else:
         initialise_db(dbpath)
