@@ -12,17 +12,22 @@ Display win probability for future games based on current Elo only.
 
 Using the win probability for each game, use a random number generator to determine the winner of games. Do this until the end of the season.
 
-### Apply to post season
+#### Apply to post season
 
 Do the same thing but apply it to the post season.
 
+## Show the change in Elo
 
-# Ideas for web app UI
+Display the change in Elo from before it was updated to after.
 
 ## Show win/loss streaks
 
 If a team is on a 9-1, or better, win streak, display a hot symbol to indicate that the team *may* be better than what their Elo reflects. Similarly, the same with losing streaks.
 
-### All-time great streaks
+#### All-time great streaks
 
 If a team is on a 13+ win streak, display an even hotter symbol. Similarly, do the same with a losing streak.
+
+
+# Ideas for web app UI
+
