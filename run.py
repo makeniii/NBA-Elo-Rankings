@@ -1,5 +1,5 @@
 from nba_elo_system import app
-from nba_elo_system.db import update_db
+from nba_elo_system.db import update_db, initialise_db
 from os import path
 from pathlib import Path
 
@@ -9,4 +9,5 @@ if __name__ == '__main__':
         update_db(dbpath)
         app.run(debug=True)
     else:
-        print('Please initialise DB before running server...', 'To initialise DB: run "nba_elo_system/db.py"')
+        print('Please wait while initialising the server...')
+        initialise_db(dbpath)
