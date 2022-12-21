@@ -14,6 +14,7 @@ CREATE TABLE game (
     type TEXT NOT NULL,
     status INTEGER NOT NULL,
     date DATE NOT NULL,
+    is_calculation_required BOOLEAN NOT NULL CHECK (is_calculation_required IN (0, 1)),
     FOREIGN KEY (season_id) REFERENCES season (year)
 );
 
