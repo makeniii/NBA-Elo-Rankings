@@ -706,3 +706,7 @@ else:
     from nba_elo_system.elo_calculator import EloCalculator
 ```
 to the top of the file. I've removed this from the version that is pushed to the main branch though. It is only going to be used when debugging and testing needs to be done. Also, I have a global variable `force_init` for debugging and testing too. Basically, when set to true, when I run `db.py`, it will always run `initialise_db()` whereas when it's false, it will always run `update_db()`. I also deleted 'main' because `db.py` is not supposed to be run. Again, it is kept in the database branch version for testing/debugging.
+
+# 23/12/22
+
+There were a few bugs in `calculate_elos()`. One of the noteworthy ones were that having two open connections to the database meant that using the second connection would result in the database getting locked. Also, that I couldn't use the attribute `rowcount` to get the number of returned rows from an `execute()` call. So, that's something to keep in mind for the future. And lastly, if the db partially updates elo ratings, then to fix the problem, I would need to reset team's elo to calculate the elo from the very first game. In saying that, I could write a function that calculates the elo's of given teams, for given play_in tuples. That would mean that I could calculate future games without actually updating the db. Something to think about for future features.
