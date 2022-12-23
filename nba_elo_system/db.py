@@ -411,11 +411,7 @@ def dict_factory(cursor, row):
     return d
 
 
-def calculate_elos(dbpath, game_ids):
-    con = sqlite3.connect(dbpath)
-    con.row_factory = dict_factory
-    cur = con.cursor()
-
+def calculate_elos(cur, game_ids):
     for game_id in game_ids:
         cur.execute('''
         SELECT plays_in.game_id, plays_in.team_id, plays_in.score, plays_in.location, plays_in.outcome
@@ -425,10 +421,12 @@ def calculate_elos(dbpath, game_ids):
         AND game.is_calculation_required = 1
         ''', (game_id,))
         
-        if cur.rowcount == -1:
+        plays_in = cur.fetchall()
+        
+        if len(plays_in) == 0:
             continue
 
-        team_a, team_b = cur.fetchall()
+        team_a, team_b = plays_in
 
         cur.execute('''SELECT elo FROM team WHERE id = (?)''', (team_a['team_id'],))
         team_a_elo = cur.fetchone()['elo']
@@ -461,12 +459,9 @@ def calculate_elos(dbpath, game_ids):
 
         team_a_elo = team_a_elo + team_a_elo_change
         team_b_elo = team_b_elo - team_a_elo_change
-        cur.execute('''UPDATE team SET elo = (?) WHERE id = (?)''', (team_a_elo, team_a['id'],))
-        cur.execute('''UPDATE team SET elo = (?) WHERE id = (?)''', (team_b_elo, team_b['id'],))
-        cur.execute('''UPDATE game SET is_calculation_required = 0 WHERE id = (?)''', (game_id))
-    
-    con.commit()
-    con.close()
+        cur.execute('''UPDATE team SET elo = (?) WHERE id = (?)''', (team_a_elo, team_a['team_id'],))
+        cur.execute('''UPDATE team SET elo = (?) WHERE id = (?)''', (team_b_elo, team_b['team_id'],))
+        cur.execute('''UPDATE game SET is_calculation_required = 0 WHERE id = (?)''', (game_id,))
 
 
 def update_db(dbpath):
@@ -538,7 +533,7 @@ def update_db(dbpath):
             SET status = (?)
             WHERE id = (?)
             """, (game['status'], game['id'],))
-        #     print(game['status'], game['id'])
+            # print(game['status'], game['id'])
         # print(f"\nUpdates to 'game' made: {True if cur.rowcount else False}")
         
         # print('\nplays_in updates\n')
@@ -551,12 +546,12 @@ def update_db(dbpath):
         #     print(plays_in['score'], plays_in['outcome'], plays_in['game_id'], plays_in['team_id'])
         # print(f"\nUpdates to 'plays_in' made: {True if cur.rowcount else False}")
 
-        calculate_elos(dbpath, [dictionary['id'] for dictionary in game_table])
-
+        calculate_elos(cur, [dictionary['id'] for dictionary in game_table])
         print(' * ...Done!')
 
     con.commit()
     con.close()
+    
 
 if __name__ == '__main__':
     dbpath = Path(__file__).parent / 'nba.db'
