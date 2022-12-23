@@ -9,5 +9,6 @@ if __name__ == '__main__':
         update_db(dbpath)
         app.run(debug=True)
     else:
-        print('Please wait while initialising the server...')
+        print(' * Please wait while initialising the server...')
         initialise_db(dbpath)
+        app.run(debug=True)
