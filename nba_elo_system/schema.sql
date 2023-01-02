@@ -24,6 +24,7 @@ CREATE TABLE plays_in (
     score INTEGER NOT NULL,
     location TEXT NOT NULL,
     outcome TEXT,
+    elo_change INTEGER,
     PRIMARY KEY (game_id, team_id)
 );
 
@@ -32,5 +33,6 @@ CREATE TABLE team (
     name TEXT NOT NULL,
     short_name TEXT NOT NULL,
     abbreviation TEXT NOT NULL,
-    elo INTEGER NOT NULL
+    elo INTEGER NOT NULL,
+    games_played INTEGER DEFAULT 0 NOT NULL
 );

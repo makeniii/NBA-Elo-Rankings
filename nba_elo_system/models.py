@@ -29,9 +29,11 @@ class PlaysIn(db.Model):
     score = db.Column(db.Integer, nullable=False)
     location = db.Column(db.String(4), nullable=False)
     outcome = db.Column(db.String(1), nullable=True)
+    elo_change = db.Column(db.Integer, nullable=True)
+    game_date = db.deferred(db.select([Game.date]).where(Game.id == game_id).scalar_subquery())
 
     def __repr__(self) -> str:
-        return f"PlaysIn('{self.game_id}', '{self.team_id}', '{self.score}', '{self.location}', '{self.outcome}')"
+        return f"PlaysIn('{self.game_id}', '{self.team_id}', '{self.score}', '{self.location}', '{self.outcome}', '{self.elo_change}')"
 
 
 class Team(db.Model):
@@ -40,7 +42,7 @@ class Team(db.Model):
     short_name = db.Column(db.Text, nullable=False)
     abbreviation = db.Column(db.Text, nullable=False)
     elo = db.Column(db.Integer, nullable=False)
-    plays_in = db.relationship('PlaysIn', backref='team', lazy=True)
+    plays_in = db.relationship('PlaysIn', order_by='desc(PlaysIn.game_date)', backref='team', lazy=True)
 
     def __repr__(self):
         return f"Team('{self.id}', '{self.name}', '{self.short_name}', '{self.abbreviation}', '{self.elo}')"
