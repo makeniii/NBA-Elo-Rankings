@@ -542,7 +542,7 @@ Also, I've found [fivethiryeight's](https://fivethirtyeight.com/features/how-we-
 
 This is something that I'm going to want to use for functions I have in mind down the line.
 
-Looks like I haven't explained what $\text{MOV}$ is either. Basically it's a multiplier for the margin of victory which is applied to both calculating the winning and losing team's Elo's. So $\text{MOV}$ is calculated from the winning team's side ($\text{Win}_{team}$). The formula is:
+Looks like I haven't explained what $\text{MOV}$ is either. Basically it's a multiplier for the margin of victory which is applied to both calculating the winning and losing team's Elo's. So $\text{MOV}$ is calculated from the winning team's side $(\text{Win}_{team})$. The formula is:
 
 $$
 \text{MOV} = \frac{(\text{Win}_{team}\text{Margin} + 3)^{0.8}}{7.5 + 0.006 \times (\text{Win}_{team}\text{R}_{o} - \text{Lose}_{team}\text{R}_{o} + \text{Win}_{team}\text{HomeAdv})}
@@ -551,7 +551,7 @@ $$
 We can see how $\text{MOV}$ is used here:
 >$$\text{R}_n=\text{R}_o+\text{K}\times\text{MOV}\times\left(\text{W}-\frac{1}{10^{-\frac{\text{RDiff}+\text{HomeAdv}}{x}}+1}\right)$$
 
-So, $\text{Win}_{team}\text{R}_{n}$ and $\text{Lose}_{team}\text{R}_{n}$ both use the $\text{MOV}$ value in their calculations.
+So, $\text{Win}_{team}$ and $\text{Lose}_{team}$ both use the $\text{MOV}$ value in their calculations.
 
 Also forgot to mention the change I made to $\text{HomeAdv}$. It is now,
 
@@ -710,3 +710,25 @@ to the top of the file. I've removed this from the version that is pushed to the
 # 23/12/22
 
 There were a few bugs in `calculate_elos()`. One of the noteworthy ones were that having two open connections to the database meant that using the second connection would result in the database getting locked. Also, that I couldn't use the attribute `rowcount` to get the number of returned rows from an `execute()` call. So, that's something to keep in mind for the future. And lastly, if the db partially updates elo ratings, then to fix the problem, I would need to reset team's elo to calculate the elo from the very first game. In saying that, I could write a function that calculates the elo's of given teams, for given play_in tuples. That would mean that I could calculate future games without actually updating the db. Something to think about for future features.
+
+# 24/12/22
+
+Created a new branch to start a working on a new function. `change-in-elo` is a branch where I'll be working on showing to the user the change in a team's elo since the last time the db has been updated. This means that it will only display the change if `update_db()` is run at the start of the web app.
+
+Going to modify the time length of change a bit. Instead of using the last time the db was updated to get the change in elo, I'm thinking of using at least 2, maybe 3, time lengths. First, would be the change from the past game. Second, would be change from a week ago. A game from at least week ago means 7 days ago, which includes that whole day, to the closest game. And lastly, would be the change from a month ago. If there are no games from a specific range, then use the longest range it can. This makes more sense than what I had before because if I updated the db, stopped the app, ran the app again, there would be no change in elo. That would seem a bit silly. Also, with this, you would be able to see if the spikes in a team's elo is random or a trend. So, to do this, I'm going to add 3 new columns to the `team` table for the change in elo to be stored in. This would mean, in `initialise_db()` and `calculate_elos()`, I would need to calculate the dates of the games and if they need to be added to those columns. I've changed my mind again. Instead of using time as the factor, I'm going to use $x$ number of games instead. Where $x = 1$, for the change in elo from game to game, $x = 9$, for intermediate change in elo, and $x = 27$, for the long term change in elo. Kinda decided on $9$ and $27$ because $9$ is a factor of $27$. With this way, I can directly compare the changes in elo since using dates might mean that some team's have more games than others. It's also easier to implement it this way.
+
+Another thing on the to do list is to refactor my `db.py` code. One thing to decide is whether using `Dataframes` is better than a `list(dict())`.
+
+# 1/1/23
+
+Enough of the holiday I guess. To update the 'game change', 'week change', and 'month change' I think I have to update the `games_played` column first then check what updates to 'change' needs to be made.
+
+I found a little bug in calculating the change and I fixed it. Renamed the columns on the webpage to better suit what the column represents.
+
+# 2/1/23
+
+I've removed the `change_in_elo` columns from the table `team`. Now, when calculating the change in elo over $n$ number of games, I've decided to store the change in elo in the `plays_in` table under `elo-change` column. I only have to sum the `elo_change` column for $n$ number of games to get the my result. I've added those changes and it's working as expected, so far...
+
+I've also implemented table sorting using the jQuery plug-in, DataTables. Ran into a few problems but they minor and I was able to solve them relatively quick. As a result of using DataTables, I've created a javascript folder in [/static](../nba_elo_system/static/js/) for my javascript files. `index.js` only contains the datatable set-up and nothing more at the moment. As of right now, I'm able to sort the table using any of the columns and there is an icon displaying how the table is currently sorted for both descending and ascending order. Also a nice little addition, a team search function.
+
+I've ran the branch with all years and it seems to be working fine. Pushed the `change-in-elo` branch to main.
