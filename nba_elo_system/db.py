@@ -17,7 +17,14 @@ else:
     from nba_elo_system.elo_calculator import EloCalculator
 
 
-FORCE_INIT = False
+FORCE_INIT = True
+
+
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
 
 
 def get_team(teams, team_key):
@@ -244,7 +251,8 @@ def create_nba_season_data(year, teams, progress, bar):
                         'team_id': int(game['competitors'][0]['id']),
                         'score': int(game['competitors'][0]['score']['value']),
                         'location': 'home',
-                        'outcome': 'W' if game['competitors'][0]['winner'] else 'L'
+                        'outcome': 'W' if game['competitors'][0]['winner'] else 'L',
+                        'elo_change': None
                     }
                 )
 
@@ -254,7 +262,8 @@ def create_nba_season_data(year, teams, progress, bar):
                         'team_id': int(game['competitors'][1]['id']),
                         'score': int(game['competitors'][1]['score']['value']),
                         'location': 'away',
-                        'outcome': 'W' if game['competitors'][1]['winner'] else 'L'
+                        'outcome': 'W' if game['competitors'][1]['winner'] else 'L',
+                        'elo_change': None
                     }
                 )
 
@@ -265,7 +274,8 @@ def create_nba_season_data(year, teams, progress, bar):
                         'team_id': int(game['competitors'][0]['id']),
                         'score': 0,
                         'location': 'home',
-                        'outcome': None
+                        'outcome': None,
+                        'elo_change': None
                     }
                 )
 
@@ -275,7 +285,8 @@ def create_nba_season_data(year, teams, progress, bar):
                         'team_id': int(game['competitors'][1]['id']),
                         'score': 0,
                         'location': 'away',
-                        'outcome': None
+                        'outcome': None,
+                        'elo_change': None
                     }
                 )
 
@@ -313,6 +324,10 @@ def initialise_db(dbpath):
         '2023'
         ]
 
+    # years = [
+    #     '2023'
+    # ]
+
     widgets = [' [',
                 progressbar.Timer(format= 'elapsed time: %(elapsed)s'),
                 '] ',
@@ -324,6 +339,7 @@ def initialise_db(dbpath):
     prog = 0
 
     con = sqlite3.connect(dbpath)
+    con.row_factory = dict_factory
     cur = con.cursor()
 
     filepath = Path(__file__).parent / 'schema.sql'
@@ -336,6 +352,7 @@ def initialise_db(dbpath):
 
     for team in data['sports'][0]['leagues'][0]['teams']:
         teams.append(team['team'])
+        
         team_table = pd.concat([team_table, pd.DataFrame(
             [{
                 'id': int(team['team']['id']),
@@ -348,14 +365,24 @@ def initialise_db(dbpath):
 
     team_table.to_sql(name='team', con=con, if_exists='append', index=False)
 
+    standings = requests.get('https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?season=2023').json()
+
+    for conf in standings['children']:
+        for team in conf['standings']['entries']:
+            team_id = team['team']['id']
+            win, loss = team['stats'][11]['displayValue'].split('-')
+            games_played = int(win) + int(loss)
+            cur.execute('''UPDATE team SET games_played = (?) WHERE id = (?)''', (games_played, team_id,))
+
     con.commit()
 
     for year in years:
         prog = create_nba_season_data(year, teams, prog, bar)
 
     cur.execute('''SELECT * FROM season''')
+    seasons = cur.fetchall()
 
-    for season in cur.fetchall():
+    for season in seasons:
         cur.execute('''
         SELECT plays_in.game_id, plays_in.team_id, plays_in.score, plays_in.location, plays_in.outcome
         FROM plays_in
@@ -363,109 +390,52 @@ def initialise_db(dbpath):
         WHERE game.season_id = (?)
         AND plays_in.outcome IS NOT NULL
         ORDER BY game.date ASC
-        ''', (season[0],))
+        ''', (season['year'],))
 
-        playsin_df = pd.DataFrame(cur.fetchall(), columns=['game_id', 'team_id', 'score', 'location', 'outcome'])
-
+        playsin_df = cur.fetchall()
         cur.execute('''SELECT * FROM team''')
-        team_df = pd.DataFrame(cur.fetchall(), columns=['id', 'name', 'short_name', 'abbreviation', 'elo'])
+        team_df = pd.DataFrame(cur.fetchall(), columns=['id', 'name', 'short_name', 'abbreviation', 'elo', 'games_played'])
         team_df['elo'] = round(team_df['elo'] * 0.75 + 1500 * 0.25)
         team_df = team_df.astype({"elo": int})
+
+        season_length = len(playsin_df)
         
-        for i in range(0, len(playsin_df), 2):
-            team_a = team_df[team_df['id'] == playsin_df.iloc[i, 1]]
-            team_b = team_df[team_df['id'] == playsin_df.iloc[i+1, 1]]
+        for i in range(0, season_length, 2):
+            team_a = team_df[team_df['id'] == playsin_df[i]['team_id']]
+            team_b = team_df[team_df['id'] == playsin_df[i+1]['team_id']]
             team_a_elo = team_a.iloc[0]['elo']
             team_b_elo = team_b.iloc[0]['elo']
 
-            if playsin_df.iloc[i]['outcome'] == 'W':
+            if playsin_df[i]['outcome'] == 'W':
                 winner = 0
                 RDiff = team_a_elo - team_b_elo
-                margin = playsin_df.iloc[i]['score'] - playsin_df.iloc[i+1]['score']
+                margin = playsin_df[i]['score'] - playsin_df[i+1]['score']
             else:
                 winner = 1
                 RDiff = team_b_elo - team_a_elo
-                margin = playsin_df.iloc[i+1]['score'] - playsin_df.iloc[i]['score']
+                margin = playsin_df[i+1]['score'] - playsin_df[i]['score']
 
             mov = EloCalculator.margin_of_victory(
                     margin,
                     RDiff,
-                    playsin_df.iloc[i+winner]['location']
+                    playsin_df[i+winner]['location']
                 )
             
-            team_a_elo_change = EloCalculator.elo_change(team_a_elo, playsin_df.iloc[i]['outcome'], team_b_elo, playsin_df.iloc[i]['location'], mov)
-            team_df.loc[team_df['id'] == playsin_df.iloc[i, 1], 'elo'] = team_a_elo + team_a_elo_change
-            team_df.loc[team_df['id'] == playsin_df.iloc[i+1, 1], 'elo'] = team_b_elo - team_a_elo_change
-            game_id = playsin_df.iloc[i]['game_id']
-            cur.execute('''UPDATE game SET is_calculation_required = 0 WHERE id = (?)''', (int(game_id),))
+            team_a_elo_change = EloCalculator.elo_change(team_a_elo, playsin_df[i]['outcome'], team_b_elo, playsin_df[i]['location'], mov)
+
+            team_df.loc[team_df['id'] == playsin_df[i]['team_id'], 'elo'] = team_a_elo + team_a_elo_change
+            team_df.loc[team_df['id'] == playsin_df[i+1]['team_id'], 'elo'] = team_b_elo - team_a_elo_change
+            cur.execute('''UPDATE game SET is_calculation_required = 0 WHERE id = (?)''', (playsin_df[i]['game_id'],))
+            cur.execute('''UPDATE plays_in SET elo_change = (?) WHERE game_id = (?) AND team_id = (?)''', (team_a_elo_change, playsin_df[i]['game_id'], playsin_df[i]['team_id'],))
+            cur.execute('''UPDATE plays_in SET elo_change = (?) WHERE game_id = (?) AND team_id = (?)''', (-team_a_elo_change, playsin_df[i+1]['game_id'], playsin_df[i+1]['team_id'],))
 
         team_df.to_sql(name='team', con=con, if_exists='replace', index=False)
 
     con.close()
 
 
-def dict_factory(cursor, row):
-    d = {}
-    for idx, col in enumerate(cursor.description):
-        d[col[0]] = row[idx]
-    return d
-
-
-def calculate_elos(cur, game_ids):
-    for game_id in game_ids:
-        cur.execute('''
-        SELECT plays_in.game_id, plays_in.team_id, plays_in.score, plays_in.location, plays_in.outcome
-        FROM plays_in
-        INNER JOIN game ON plays_in.game_id = game.id
-        WHERE game.id = (?)
-        AND game.is_calculation_required = 1
-        ''', (game_id,))
-        
-        plays_in = cur.fetchall()
-        
-        if len(plays_in) == 0:
-            continue
-
-        team_a, team_b = plays_in
-
-        cur.execute('''SELECT elo FROM team WHERE id = (?)''', (team_a['team_id'],))
-        team_a_elo = cur.fetchone()['elo']
-
-        cur.execute('''SELECT elo FROM team WHERE id = (?)''', (team_b['team_id'],))
-        team_b_elo = cur.fetchone()['elo']
-
-        if team_a['outcome'] == 'W':
-            RDiff = team_a_elo - team_b_elo
-            margin = team_a['score'] - team_b['score']
-            location = team_a['location']
-        else:
-            RDiff = team_b_elo - team_a_elo
-            margin = team_b['score'] - team_a['score']
-            location = team_b['location']
-
-        mov = EloCalculator.margin_of_victory(
-            margin,
-            RDiff,
-            location
-        )
-
-        team_a_elo_change = EloCalculator.elo_change(
-            team_a_elo,
-            team_a['outcome'],
-            team_b_elo,
-            team_a['location'],
-            mov
-        )
-
-        team_a_elo = team_a_elo + team_a_elo_change
-        team_b_elo = team_b_elo - team_a_elo_change
-        cur.execute('''UPDATE team SET elo = (?) WHERE id = (?)''', (team_a_elo, team_a['team_id'],))
-        cur.execute('''UPDATE team SET elo = (?) WHERE id = (?)''', (team_b_elo, team_b['team_id'],))
-        cur.execute('''UPDATE game SET is_calculation_required = 0 WHERE id = (?)''', (game_id,))
-
-
 def update_db(dbpath):
-    date = datetime.datetime.today() - datetime.timedelta(days=1, hours=15)
+    date = datetime.datetime.today() - datetime.timedelta(days=1, hours=16)
     curr_date = date.date()
 
     con = sqlite3.connect(dbpath)
@@ -481,7 +451,7 @@ def update_db(dbpath):
     date = datetime.datetime.strptime(date, '%Y-%m-%d').date() - datetime.timedelta(days=1)
     # print(curr_date, date)
 
-    if curr_date >= date:
+    if curr_date > date:
         print(' * Updating DB ...')
         date = str(date).replace('-','')
         curr_date = str(curr_date).replace('-','')
@@ -523,8 +493,8 @@ def update_db(dbpath):
                         'outcome': 'W' if game['competitors'][1]['winner'] else 'L'
                 }
 
-            playsin_table.append(home)
-            playsin_table.append(away)
+                playsin_table.append(home)
+                playsin_table.append(away)
 
         # print('game updates:\n')
         for game in game_table:
@@ -546,11 +516,78 @@ def update_db(dbpath):
         #     print(plays_in['score'], plays_in['outcome'], plays_in['game_id'], plays_in['team_id'])
         # print(f"\nUpdates to 'plays_in' made: {True if cur.rowcount else False}")
 
+        cur.execute('''
+        SELECT plays_in.team_id, COUNT(*) as games_played
+        FROM plays_IN
+        INNER JOIN game ON plays_in.game_id = game.id
+        WHERE game.season_id = 2023
+        AND game.status = 3
+        GROUP BY plays_in.team_id
+        ''')
+
         calculate_elos(cur, [dictionary['id'] for dictionary in game_table])
         print(' * ...Done!')
 
     con.commit()
     con.close()
+
+
+def calculate_elos(cur, game_ids):
+    for game_id in game_ids:
+        cur.execute('''
+        SELECT plays_in.game_id, plays_in.team_id, plays_in.score, plays_in.location, plays_in.outcome
+        FROM plays_in
+        INNER JOIN game ON plays_in.game_id = game.id
+        WHERE game.id = (?)
+        AND game.is_calculation_required = 1
+        ORDER BY game.date ASC
+        ''', (game_id,))
+        
+        plays_in = cur.fetchall()
+        
+        if len(plays_in) == 0:
+            continue
+
+        team_a, team_b = plays_in
+
+        cur.execute('''SELECT elo FROM team WHERE id = (?)''', (team_a['team_id'],))
+        team_a_elo = cur.fetchone()['elo']
+
+        cur.execute('''SELECT elo FROM team WHERE id = (?)''', (team_b['team_id'],))
+        team_b_elo = cur.fetchone()['elo']
+
+        if team_a['outcome'] == 'W':
+            RDiff = team_a_elo - team_b_elo
+            margin = team_a['score'] - team_b['score']
+            location = team_a['location']
+        else:
+            RDiff = team_b_elo - team_a_elo
+            margin = team_b['score'] - team_a['score']
+            location = team_b['location']
+
+        mov = EloCalculator.margin_of_victory(
+            margin,
+            RDiff,
+            location
+        )
+
+        team_a_elo_change = EloCalculator.elo_change(
+            team_a_elo,
+            team_a['outcome'],
+            team_b_elo,
+            team_a['location'],
+            mov
+        )
+
+        # cur.execute('''UPDATE team SET change_in_elo = change_in_elo + (?) WHERE id = (?)''', (team_a_elo_change, team_a['team_id'],))
+        # cur.execute('''UPDATE team SET change_in_elo = change_in_elo + (?) WHERE id = (?)''', (-team_a_elo_change, team_b['team_id'],))
+        team_a_elo = team_a_elo + team_a_elo_change
+        team_b_elo = team_b_elo - team_a_elo_change
+        cur.execute('''UPDATE team SET elo = (?) WHERE id = (?)''', (team_a_elo, team_a['team_id'],))
+        cur.execute('''UPDATE team SET elo = (?) WHERE id = (?)''', (team_b_elo, team_b['team_id'],))
+        cur.execute('''UPDATE game SET is_calculation_required = 0 WHERE id = (?)''', (game_id,))
+        cur.execute('''UPDATE plays_in SET elo_change = (?) WHERE game_id = (?) AND team_id = (?)''', (team_a_elo_change, team_a['game_id'], team_a['team_id'],))
+        cur.execute('''UPDATE plays_in SET elo_change = (?) WHERE game_id = (?) AND team_id = (?)''', (-team_a_elo_change, team_b['game_id'], team_b['team_id'],))
     
 
 if __name__ == '__main__':
