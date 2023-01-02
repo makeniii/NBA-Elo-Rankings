@@ -6,6 +6,7 @@
     --accent-colour: #7d7abc;
     --header-padding: 20px 2.5%;
     --main-width: 75%;
+    --min-width: 1200px;
 }
 
 * {
@@ -29,6 +30,7 @@ header {
 }
 
 nav {
+    min-width: var(--min-width);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -87,6 +89,7 @@ main {
     border-radius: 5px;
     min-height: calc(100vh - 119px - 60px);
     position: relative;
+    min-width: fit-content;
 }
 
 .main-body {
@@ -97,6 +100,7 @@ main {
     margin: auto;
     padding: 20px;
     border-radius: 5px;
+    min-width: fit-content;
 }
 
 .title {
@@ -107,28 +111,88 @@ main {
     width: 100%;
     padding: 10px 0;
     margin: auto;    
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing:  0 5px;
+    text-align: left;
+    padding-left: 20px;
+    padding-right: 20px;
+    min-width: var(--min-width);
+}
+
+.elo-table thead .sorting:before,
+.elo-table thead .sorting_asc:before,
+.elo-table thead .sorting_desc:before,
+.elo-table thead .sorting_asc_disabled:before,
+.elo-table thead .sorting_desc_disabled:before{
+    bottom: 50%;
+    content: "▲";
+}
+
+.elo-table thead .sorting:after,
+.elo-table thead .sorting_asc:after,
+.elo-table thead .sorting_desc:after,
+.elo-table thead .sorting_asc_disabled:after,
+.elo-table thead .sorting_desc_disabled:after{
+    top: 50%;
+    content: "▼";
+}
+
+.elo-table thead th {
+    position: relative;
+    cursor: pointer;
+}
+  
+.elo-table thead th.sorting:after,
+.elo-table thead th.sorting_asc:after,
+.elo-table thead th.sorting_desc:after,
+.elo-table thead th.sorting:before,
+.elo-table thead th.sorting_asc:before,
+.elo-table thead th.sorting_desc:before {
+    position: absolute;
+    display: block;
+    opacity: .125;
+    right: 0px;
+    line-height: 9px;
+    font-size: 1em;
+}
+
+.elo-table thead th.sorting_asc:before, 
+.elo-table thead th.sorting_desc:after {
+    opacity: .6;
 }
 
 .elo-table-outer-left {
     padding: 10px 5px;
+    /* padding-right: 30px; */
+    min-width: 80px;
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
 }
 
-.elo-table-outer-right {
-    padding: 10px 5px;
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
+.elo-table-team-row {
+    padding-left: 15px;
+    width: 50%;
 }
 
-.elo-table-team-row {
-    width: 70%;
-    text-align: left;
+.elo-table-elo {
+    padding-left: 15px;
+    min-width: 100px;
 }
 
 .elo-table-teams:hover {
-    background: var(--accent-colour);
+    background: var(--background-secondary);
+}
+
+.elo-table-change {
+    padding-left: 15px;
+    min-width: 150px;
+}
+
+.elo-table-outer-right {
+    padding-left: 15px;
+    min-width: 160px;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
 }
 
 footer {
@@ -138,4 +202,5 @@ footer {
     text-align: center;
     height: 136px;
     padding: 58px;
+    min-width: var(--min-width);
 }
