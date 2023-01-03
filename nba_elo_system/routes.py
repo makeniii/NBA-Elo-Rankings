@@ -31,3 +31,7 @@ def index():
         
 
     return render_template('index.html', teams=teams, game_change=game_change, short_change=short_change, long_change=long_change)
+
+@app.route('/schedule')
+def schedule():
+    return render_template('schedule.html')
