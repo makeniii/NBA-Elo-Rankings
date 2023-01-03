@@ -17,7 +17,7 @@ else:
     from nba_elo_system.elo_calculator import EloCalculator
 
 
-FORCE_INIT = True
+FORCE_INIT = False
 
 
 def dict_factory(cursor, row):
@@ -54,47 +54,6 @@ def executeScriptsFromFile(filename, cur):
 
 
 '''
-Game        = schedule_json['events']['competitions'][0] - seems like index is always 1. At least for nba games.
-HomeTeam    = Game['competitors'][0]
-AwayTeam    = Game['competitors'][1]
-Game ID     = Game['id']
-Game status = Game['status']['type']['id'] - only accept 1/3
-
-Game status - all strings
-1 = scheduled
-2 = live
-3 = completed
-6 = postponed
-4/5 = ?
-22 = end of third quarter
-
-HomeTeam/AwayTeam Location  = Game['competitors'][0/1]['homeAway']
-HomeTeam/AwayTeam Outcome   = Game['competitors'][0/1]['winner']
-HomeTeam/AwayTeam Score     = Game['competitors'][0/1]['score']['value'] - floating value returned
-
-
-Season      = schedule_json['requestedSeason']
-Name        = Season['displayName']
-Year        = Season['year']
-
-* notes
-
-When getting the schedule of a team. That team will have an additional 'leaders' key in HomeTeam/AwayTeam. 'leaders' will contain
-the leaders of that team's points, rebounds, and assists.
-
-https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/{team_abbreviation}/schedule - gets most recent sesaon
-https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/{team_abbreviation}/schedule?season={season} - gets requested season
-https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/{team_abbreviation}/schedule?seasontype={seasontype} - most recent requested season type
-
-seasontype
-1 = pre season
-2 = regular season
-3 = post season
-5 = play ins
-
-schedule_json['season'] is info on current season.
-
-
 standings['entries']['stats'] - has streak wins !!
 '''
 
