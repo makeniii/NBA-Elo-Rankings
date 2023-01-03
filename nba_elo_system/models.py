@@ -17,10 +17,11 @@ class Game(db.Model):
     status = db.Column(db.Integer, nullable=False)
     date = db.Column(db.Date, nullable=False)
     is_calculation_required = db.Column(db.Boolean, nullable=False)
+
     plays_in = db.relationship('PlaysIn', backref='game', lazy=True)
 
     def __repr__(self) -> str:
-        return f"Game('{self.id}', '{self.season_id}', '{self.type}', '{self.status}')"
+        return f"Game('{self.id}', '{self.season_id}', '{self.type}', '{self.status}', '{self.date}', '{self.is_calculation_required}')"
 
 
 class PlaysIn(db.Model):
@@ -30,6 +31,7 @@ class PlaysIn(db.Model):
     location = db.Column(db.String(4), nullable=False)
     outcome = db.Column(db.String(1), nullable=True)
     elo_change = db.Column(db.Integer, nullable=True)
+
     game_date = db.deferred(db.select([Game.date]).where(Game.id == game_id).scalar_subquery())
 
     def __repr__(self) -> str:
@@ -42,6 +44,7 @@ class Team(db.Model):
     short_name = db.Column(db.Text, nullable=False)
     abbreviation = db.Column(db.Text, nullable=False)
     elo = db.Column(db.Integer, nullable=False)
+
     plays_in = db.relationship('PlaysIn', order_by='desc(PlaysIn.game_date)', backref='team', lazy=True)
 
     def __repr__(self):
