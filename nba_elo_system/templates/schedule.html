@@ -3,3 +3,9 @@
 {% block head %}
 <title>NBA Elo Ratings</title>
 {% endblock head %}
+
+{% block body %}
+    {% for game in schedule %}
+        {{ game }}
+    {% endfor %}
+{% endblock body %}
