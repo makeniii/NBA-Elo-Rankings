@@ -439,6 +439,7 @@ def update_db(dbpath):
     curr_date = date.date()
 
     con = sqlite3.connect(dbpath)
+    con.row_factory = dict_factory
     cur = con.cursor()
 
     cur.execute(
@@ -447,7 +448,7 @@ def update_db(dbpath):
         '''
     )
 
-    date = cur.fetchone()[0]
+    date = cur.fetchone()['date']
     date = datetime.datetime.strptime(date, '%Y-%m-%d').date() - datetime.timedelta(days=1)
     # print(curr_date, date)
 
