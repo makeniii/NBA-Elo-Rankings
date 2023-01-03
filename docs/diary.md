@@ -736,3 +736,5 @@ I've ran the branch with all years and it seems to be working fine. Pushed the `
 # 3/1/23
 
 Cleaned up `db.py` a bit.
+
+Started new feature of website. Display the up-coming schedule (1 week). I'm able to gather the next week schedule with each game having 2 entries, one for home and away. Each entry has a `PlaysIn` and `Team` object. Just need to decide how I should display the schedule.
