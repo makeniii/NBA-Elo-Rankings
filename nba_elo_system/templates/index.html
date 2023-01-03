@@ -6,49 +6,46 @@
 {% endblock head %}
 
 {% block body %}
-    <div class="main-body">
-        <table class="elo-table" id="elo-table">
-            <thead>
-                <tr>
-                    <th class="elo-table-outer-left">RANK</th>
-                    <th class="elo-table-team-row"><span>TEAM</span></th>
-                    <th class="elo-table-elo">ELO</th>
-                    <th class="elo-table-change">LAST GAME</th>
-                    <th class="elo-table-change">LAST 9 GAMES</th>
-                    <th class="elo-table-outer-right">LAST 27 GAMES</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for team in teams %}
-                <tr class="elo-table-teams">
-                    <td class="elo-table-outer-left">{{ loop.index }}</td>
-                    <td class="elo-table-team-row">{{ team.name }}</td>
-                    <td class="elo-table-elo">{{ team.elo }}</td>
-                    <td class="elo-table-change">
-                        {% if game_change[loop.index - 1] > 0 %}
-                            +{{ game_change[loop.index - 1] }}
-                        {% else %}
-                            {{ game_change[loop.index - 1] }}
-                        {% endif %}
-                    </td>
-                    <td class="elo-table-change">
-                        {% if short_change[loop.index - 1] > 0 %}
-                            +{{ short_change[loop.index - 1] }}
-                        {% else %}
-                            {{ short_change[loop.index - 1] }}
-                        {% endif %}
-                    </td>
-                    <td class="elo-table-outer-right">
-                        {% if long_change[loop.index - 1] > 0 %}
-                            +{{ long_change[loop.index - 1] }}
-                        {% else %}
-                            {{ long_change[loop.index - 1] }}
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        
-    </div>
+    <table class="elo-table" id="elo-table">
+        <thead>
+            <tr>
+                <th class="elo-table-outer-left">RANK</th>
+                <th class="elo-table-team-row"><span>TEAM</span></th>
+                <th class="elo-table-elo">ELO</th>
+                <th class="elo-table-change">LAST GAME</th>
+                <th class="elo-table-change">LAST 9 GAMES</th>
+                <th class="elo-table-outer-right">LAST 27 GAMES</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for team in teams %}
+            <tr class="elo-table-teams">
+                <td class="elo-table-outer-left">{{ loop.index }}</td>
+                <td class="elo-table-team-row">{{ team.name }}</td>
+                <td class="elo-table-elo">{{ team.elo }}</td>
+                <td class="elo-table-change">
+                    {% if game_change[loop.index - 1] > 0 %}
+                        +{{ game_change[loop.index - 1] }}
+                    {% else %}
+                        {{ game_change[loop.index - 1] }}
+                    {% endif %}
+                </td>
+                <td class="elo-table-change">
+                    {% if short_change[loop.index - 1] > 0 %}
+                        +{{ short_change[loop.index - 1] }}
+                    {% else %}
+                        {{ short_change[loop.index - 1] }}
+                    {% endif %}
+                </td>
+                <td class="elo-table-outer-right">
+                    {% if long_change[loop.index - 1] > 0 %}
+                        +{{ long_change[loop.index - 1] }}
+                    {% else %}
+                        {{ long_change[loop.index - 1] }}
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock body %}
