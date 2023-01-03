@@ -732,3 +732,7 @@ I've removed the `change_in_elo` columns from the table `team`. Now, when calcul
 I've also implemented table sorting using the jQuery plug-in, DataTables. Ran into a few problems but they minor and I was able to solve them relatively quick. As a result of using DataTables, I've created a javascript folder in [/static](../nba_elo_system/static/js/) for my javascript files. `index.js` only contains the datatable set-up and nothing more at the moment. As of right now, I'm able to sort the table using any of the columns and there is an icon displaying how the table is currently sorted for both descending and ascending order. Also a nice little addition, a team search function.
 
 I've ran the branch with all years and it seems to be working fine. Pushed the `change-in-elo` branch to main.
+
+# 3/1/23
+
+Cleaned up `db.py` a bit.
