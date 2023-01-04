@@ -98,7 +98,10 @@ main {
     min-height: calc(100vh - 136px * 2);
     width: var(--main-width);
     margin: auto;
-    padding: 20px;
+    padding-top: 3%;
+    padding-left: 2%;
+    padding-right: 2%;
+    padding-bottom: 2%;
     border-radius: 5px;
     min-width: fit-content;
 }
@@ -193,6 +196,37 @@ main {
     min-width: 160px;
     border-top-right-radius: 5px;
     border-bottom-right-radius: 5px;
+}
+
+.schedule-body {
+    text-align: left;
+    padding-left: 25px;
+    padding-right: 25px;
+}
+
+.schedule-title {
+    padding-bottom: 5%;
+}
+
+.schedule-day {
+    padding-bottom: 15px;
+}
+
+.schedule-day-body {
+    padding-bottom: 4%;
+}
+
+.day-underline {
+    align-self: center;
+    height: 1px;
+    width: 100%;
+    background-color: var(--background-secondary);
+    border: 0 none;
+    margin-bottom: 25px;
+}
+
+.schedule-game {
+    padding-bottom: 1%;
 }
 
 footer {
