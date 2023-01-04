@@ -5,7 +5,23 @@
 {% endblock head %}
 
 {% block body %}
-    {% for game in schedule %}
-        {{ game }}
+<div class="schedule-body">
+    <h2 class="schedule-title">Upcoming Schedule</h2>
+    {% for day in week_schedule %}
+        <div class="schedule-day-body">
+            <h3 class="schedule-day">{{ day.day }}, {{ day.date.strftime("%d/%m") }}</h3>
+            <hr class="day-underline"/>
+            {% for game in day.games %}
+                {% set away_win_probability = round(win_expectancy(game.away.elo, game.home.elo, 'away') * 100) %}
+                {% set home_win_probability = 100 - away_win_probability %}
+                {% set point_diff = score_round(projected_point_diff(game.away.elo, game.home.elo, 'away')) %}
+                <div class="schedule-game">
+                    <p>{{ game.away.short_name }} @ {{ game.home.short_name }}</p>
+                    <p>{{ game.away.short_name }} win probability: {{ away_win_probability }}%, Projected point differential: {{ point_diff }}</p>
+                    <p>{{ game.home.short_name }} win probability: {{ home_win_probability }}%, Projected point differential: {{ -point_diff }}</p>
+                </div>
+            {% endfor %}
+        </div>
     {% endfor %}
+</div>
 {% endblock body %}
