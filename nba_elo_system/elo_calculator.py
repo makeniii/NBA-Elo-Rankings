@@ -33,5 +33,5 @@ class EloCalculator():
         return 1 if location == 'home' else -1
 
     @staticmethod
-    def projected_margin_of_victory(Ro: int, OPPRo: int, location: str):
+    def projected_point_diff(Ro: int, OPPRo: int, location: str):
         return (Ro - OPPRo + EloCalculator.home_adv * EloCalculator.home_adv_calc(location)) / 28
