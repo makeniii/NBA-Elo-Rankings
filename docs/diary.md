@@ -738,3 +738,10 @@ I've ran the branch with all years and it seems to be working fine. Pushed the `
 Cleaned up `db.py` a bit.
 
 Started new feature of website. Display the up-coming schedule (1 week). I'm able to gather the next week schedule with each game having 2 entries, one for home and away. Each entry has a `PlaysIn` and `Team` object. Just need to decide how I should display the schedule.
+
+# 4/1/23
+
+I got the new `schedule` page up and running. Currently it displays the next week's game schedule. In each game, it contains: the teams playing; home/away; win probability; and projected point differential. I'm just printing it to the page at the moment so I'll have to make it more aestheticly pleasing later. Going to try and pass to the template, rows - a list in python - where they are lengths of 3. That way in the html file `schedule`, I can create 3 horizontal tables to take up the width of the page. Also added a few classes to `style.css` to accomodate `schedule.html`. 
+
+I added a new static method to `EloCalculator`, `projected_margin_of_victory()` to calculate the projected point differential as mentioned earlier. `projected_margin_of_victory()` and `margin_of_victory()` don't mean similar things. `projected_margin_of_victory()` returns the point differential of two Elo's while `margin_of_victory()` returns a value based on the margin of victory.
+
