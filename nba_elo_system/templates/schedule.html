@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block head %}
+<script type="text/javascript" src="{{ url_for('static', filename='js/schedule.js') }}"></script>
 <title>NBA Elo Ratings</title>
 {% endblock head %}
 
@@ -11,16 +12,38 @@
         <div class="schedule-day-body">
             <h3 class="schedule-day">{{ day.day }}, {{ day.date.strftime("%d/%m") }}</h3>
             <hr class="day-underline"/>
-            {% for game in day.games %}
-                {% set away_win_probability = round(win_expectancy(game.away.elo, game.home.elo, 'away') * 100) %}
-                {% set home_win_probability = 100 - away_win_probability %}
-                {% set point_diff = score_round(projected_point_diff(game.away.elo, game.home.elo, 'away')) %}
-                <div class="schedule-game">
-                    <p>{{ game.away.short_name }} @ {{ game.home.short_name }}</p>
-                    <p>{{ game.away.short_name }} win probability: {{ away_win_probability }}%, Projected point differential: {{ point_diff }}</p>
-                    <p>{{ game.home.short_name }} win probability: {{ home_win_probability }}%, Projected point differential: {{ -point_diff }}</p>
-                </div>
-            {% endfor %}
+            <!-- for each set in games list -->
+            <table class="set">
+                {% for set in day.games %}
+                <tr>
+                    <!-- for each game in set -->
+                    {% for game in set %}
+                    {% set away_win_probability = round(win_expectancy(game.away.elo, game.home.elo, 'away') * 100) %}
+                    {% set home_win_probability = 100 - away_win_probability %}
+                    {% set point_diff = score_round(projected_point_diff(game.away.elo, game.home.elo, 'away')) %}
+                    <td class="set-game-row">
+                        <table class="set-game" id="game">
+                            <tr>
+                                <td class="left-column">{{ game.away.short_name }}</td>
+                                <td class="mid-column">@</td>
+                                <td class="right-column">{{ game.home.short_name }}</td>
+                            </tr>
+                            <tr>
+                                <td class="left-column" id="away-win-prob">{{ away_win_probability }}%</td>
+                                <td class="mid-column">Win Probability</td>
+                                <td class="right-column" id="home-win-prob">{{ home_win_probability }}%</td>
+                            </tr>
+                            <tr>
+                                <td class="left-column" id="away-point-diff">{{ point_diff }}</td>
+                                <td class="mid-column">Projected Point Differential</td>
+                                <td class="right-column" id="home-point-diff">{{ -point_diff }}</td>
+                            </tr>
+                        </table>
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
         </div>
     {% endfor %}
 </div>
