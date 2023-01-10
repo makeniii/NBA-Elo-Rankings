@@ -744,3 +744,31 @@ Started new feature of website. Display the up-coming schedule (1 week). I'm abl
 I got the new `schedule` page up and running. Currently it displays the next week's game schedule. In each game, it contains: the teams playing; home/away; win probability; and projected point differential. I'm just printing it to the page at the moment so I'll have to make it more aestheticly pleasing later. Going to try and pass to the template, rows - a list in python - where they are lengths of 3. That way in the html file `schedule`, I can create 3 horizontal tables to take up the width of the page. Also added a few classes to `style.css` to accomodate `schedule.html`. 
 
 I added a new static method to `EloCalculator`, `projected_point_diff()` to calculate the projected point differential of two given Elo's, as mentioned earlier. Although calculating the projected point differential has nothing to do with the `EloCalculator` class, I added it there anyways because I didn't want to create a new class just to accomodate the one function.
+
+# 10/1/23
+
+I've now completed the `schedule` page up to my standards. I've done quite a bit since the last time so I'm going to go through the changes.
+
+Made a little change to the overall website. I've changed `background-primary` in `style.css`, to a lighter shade of grey because I find it easier to read and it looks better.
+
+I modified the `week_schedule` to be:
+```
+week_schedule = [
+  {
+    'day' = str(),
+    'date' = date(),
+    'games' = [
+      [
+        {
+          'home' = Team()
+          'away' = Team()
+        }
+      ]
+    ]
+  }
+]
+```
+
+`week_schedule['games']` is a list of lists where each list is of max length, 2. This is so that I can display each list in the same row on the `schedule` page. `week_schedule` is then sorted by the date. This way I can show the games in order of the date. To help me with this, I created a new file, `nba_elo_system/utils.py` to contain helper functions. I created `add_game_to_day` to put the given game to the correct games list. Finally, I pass `week_schedule` to the `render_template` function. I updated `schedule.html` and `style.css` to accomodate these changes. I also created a new file, `static/js/schedule.js`. This file helps me to colour the teams who are projected to win and lose with green and red respectively. Not only does it colour the teams, but it also calculates the shade of the colour based on the win/loss percentage. I got the `RGB_Linear_Shade` function from this [stackoverflow answer](https://stackoverflow.com/questions/5560248/programmatically-lighten-or-darken-a-hex-color-or-rgb-and-blend-colors/13542669#13542669). This function takes a percentage and rgb colour, and returns a shade of that colour, where 0 is no shade and 1 is the lightest shade (i.e. white).
+
+I've pushed the changes into main.
