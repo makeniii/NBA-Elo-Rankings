@@ -2,6 +2,7 @@ from flask import render_template, url_for
 from nba_elo_system import app, db
 from nba_elo_system.models import Season, Game, PlaysIn, Team
 from nba_elo_system.elo_calculator import EloCalculator
+from nba_elo_system.utils import add_game_to_day
 import datetime
 import pprint
 
@@ -52,28 +53,6 @@ def schedule():
     sat_games = list()
     sun_games = list()
 
-    for game in upcoming_week_schedule_data:
-        game['home']['team'] = Team.query.filter(Team.id == game['home']['playsin'].team_id).one()
-        game['away']['team'] = Team.query.filter(Team.id == game['away']['playsin'].team_id).one()
-        game_day = game['home']['playsin'].game_date.strftime('%A')
-        game['home'] = game['home']['team']
-        game['away'] = game['away']['team']
-        
-        if game_day == 'Monday':
-            mon_games.append(game)
-        elif game_day == 'Tuesday':
-            tue_games.append(game)
-        elif game_day == 'Wednesday':
-            wed_games.append(game)
-        elif game_day == 'Thursday':
-            thu_games.append(game)
-        elif game_day == 'Friday':
-            fri_games.append(game)
-        elif game_day == 'Saturday':
-            sat_games.append(game)
-        elif game_day == 'Sunday':
-            sun_games.append(game)
-    
     week_schedule = [
         {
             'day': 'Monday',
@@ -104,6 +83,14 @@ def schedule():
             'games': sun_games
         }
     ]
+
+    for game in upcoming_week_schedule_data:
+        game['home']['team'] = Team.query.filter(Team.id == game['home']['playsin'].team_id).one()
+        game['away']['team'] = Team.query.filter(Team.id == game['away']['playsin'].team_id).one()
+        game_day = game['home']['playsin'].game_date.strftime('%A')
+        game['home'] = game['home']['team']
+        game['away'] = game['away']['team']
+        week_schedule = add_game_to_day(game, game_day, week_schedule)
 
     for i in range(7):
         week_schedule[dates[i].weekday()]['date'] = dates[i]
