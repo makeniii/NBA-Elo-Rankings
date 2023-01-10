@@ -32,3 +32,6 @@ If a team is on a 13+ win streak, display an even hotter symbol. Similarly, do t
 
 When updating the database, calculate the changes in ranking and display next to ranking.
 
+## Add logos to database
+
+Store team logos to the database so they can be used on the website.
