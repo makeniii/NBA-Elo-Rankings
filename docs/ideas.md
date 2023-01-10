@@ -1,4 +1,4 @@
-# Ideas for web app functionality
+# Ideas
 
 ## Show all time great teams
 
@@ -28,6 +28,10 @@ If a team is on a 9-1, or better, win streak, display a hot symbol to indicate t
 
 If a team is on a 13+ win streak, display an even hotter symbol. Similarly, do the same with a losing streak.
 
+## Show changes in ranking
 
-# Ideas for web app UI
+When updating the database, calculate the changes in ranking and display next to ranking.
 
+## Add logos to database
+
+Store team logos to the database so they can be used on the website.
