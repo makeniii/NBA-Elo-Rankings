@@ -189,13 +189,17 @@ def create_nba_season_data(year, teams, progress, bar):
             if game_id in game_table['id'].values:
                 continue
 
+            
+            utc_datetime = datetime.datetime.strptime(game['date'], '%Y-%m-%dT%H:%MZ')
+            local_datetime = utc_datetime.replace(tzinfo=datetime.timezone.utc).astimezone(tz=None)
+
             game_entry = pd.DataFrame(
                 [{
                     'id': game_id,
                     'season_id': season_year,
                     'type': season_type,
                     'status': int(game_status),
-                    'date': game['date'][:-7],
+                    'date': local_datetime.date(),
                     'is_calculation_required': 1
                 }]
             )
