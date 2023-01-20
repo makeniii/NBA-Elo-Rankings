@@ -412,16 +412,16 @@ def get_updated_games(start_date, end_date):
         game = event['competitions'][0]
         game_status = game['status']['type']['id']
         
-        game_id = int(game['id'])
+        if game_status == '3':            
+            game_id = int(game['id'])
 
-        game_entry = {
-            'id': game_id,
-            'status': int(game_status)
-        }
+            game_entry = {
+                'id': game_id,
+                'status': int(game_status)
+            }
 
-        game_table.append(game_entry)
+            game_table.append(game_entry)
 
-        if game_status == '3':
             home = {
                 'game_id': game_id,
                 'team_id': int(game['competitors'][0]['id']),
@@ -446,18 +446,22 @@ def update_db(dbpath):
     con = sqlite3.connect(dbpath)
     con.row_factory = dict_factory
     cur = con.cursor()
-    cur.execute('''SELECT date FROM game WHERE status = 3 ORDER BY date DESC''')
 
     # current date
-    end_date = (datetime.datetime.today() - datetime.timedelta(days=1, hours=16)).date()
+    end_date = datetime.datetime.today().date()
 
     # date of last game played in database
+    cur.execute('''SELECT date FROM game WHERE status = 3 ORDER BY date DESC''')
     start_date = cur.fetchone()['date']
-    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d').date() - datetime.timedelta(days=1)
+    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d').date()
 
-    if end_date > start_date:
-        print(' * Updating DB ...')
+    if end_date >= start_date:
         game_table, playsin_table = get_updated_games(start_date, end_date)
+        
+        if not game_table:
+            return
+
+        print(' * Updating DB ...')
 
         for game in game_table:
             cur.execute('''
