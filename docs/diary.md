@@ -778,3 +778,7 @@ I've pushed the changes into main.
 I found a bug in `db.py` where `create_nba_season_data()` is defined. After comparing my own `Schedule` page I found that it was inconsistant with the NBA's upcoming schedule. Games that were played in the very early morning (AEDT) were dated to the previous day for some reason. It was relatively easy to find the fix. It was because the date that was extracted from the ESPN api would be in the GMT time zone. So, to fix the bug, all I had to do was convert to my local time zone, AEDT. Since I am using `astimezone()` with no parameters, it converts the `DateTime` object to local date, time, and time zone so there shouldn't be a problem when AEST becomes the time zone.
 
 I have pushed the fix into main.
+
+In `db.py`, `update_db()` currently only updates games from the same day after 6pm. I've changed it to update even the same day games as they are completed according to the ESPN api, where the `game['status']` would have to equal `3`. Now I don't have to wait til 6pm to see the updates in elo after a game.
+
+I've pushed the changes into main.
