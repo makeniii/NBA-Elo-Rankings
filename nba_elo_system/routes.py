@@ -105,6 +105,10 @@ def schedule():
 
     week_schedule.sort(key=lambda x: x['date'])
 
+    for day in week_schedule:
+        if not day['games']:
+            week_schedule.remove(day)
+
     return render_template(
         'schedule.html', 
         week_schedule=week_schedule, 

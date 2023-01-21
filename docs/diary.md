@@ -792,3 +792,5 @@ Another change I've made is that I've decided to run `db.py::update_db()` in bot
 I've pushed the changes into main.
 
 Found another bug. In `db.py::get_updated_games()`, the ESPN api uses dates in the EST format, whereas my database uses my local time zone (AEDT). So, I had to convert the dates to EST to get the correct dates.
+
+I've modified `routes.py::schedule()` to remove days where there are no games and pushed the changes into main.
