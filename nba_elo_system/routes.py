@@ -1,14 +1,16 @@
 from flask import render_template, url_for
-from nba_elo_system import app, db
+from nba_elo_system import app, db, db_path
 from nba_elo_system.models import Season, Game, PlaysIn, Team
 from nba_elo_system.elo_calculator import EloCalculator
 from nba_elo_system.utils import add_game_to_day
+from nba_elo_system.db import update_db
 import datetime
 import pprint
 
 
 @app.route('/')
 def index():
+    update_db(db_path)
     teams = Team.query.order_by(Team.elo.desc()).all()
     game_change = list()
     short_change = list()
@@ -38,12 +40,18 @@ def index():
 
 @app.route('/schedule')
 def schedule():
+    update_db(db_path)
     # get games from the following week
-    # only tick over to next day after 6pm AEST
-    start_date = (datetime.datetime.today() + datetime.timedelta(hours=6)).date()
+    start_date = datetime.datetime.today().date()
     dates = [start_date] + [start_date + datetime.timedelta(days=i) for i in range(1, 7)]
-    upcoming_week_schedule_data = PlaysIn.query.filter(PlaysIn.game_date.in_(dates)).order_by(PlaysIn.game_date.asc(), PlaysIn.game_id.asc(), PlaysIn.location.desc()).all()
-    upcoming_week_schedule_data = [{'home': {'playsin': upcoming_week_schedule_data[i]}, 'away': {'playsin': upcoming_week_schedule_data[i+1]}} for i in range(0, len(upcoming_week_schedule_data), 2)]
+    game_data = Game.query.filter(Game.date.in_(dates), Game.status != 3).order_by(Game.date.asc(), Game.id.asc()).all()
+    upcoming_week_schedule_data = [
+            {
+                'date': game_data[i].date, 
+                'home': {'playsin': game_data[i].plays_in[1]},
+                'away': {'playsin': game_data[i].plays_in[0]}
+            } for i in range(0, len(game_data))
+        ]
 
     mon_games = list()
     tue_games = list()
@@ -87,7 +95,7 @@ def schedule():
     for game in upcoming_week_schedule_data:
         game['home']['team'] = Team.query.filter(Team.id == game['home']['playsin'].team_id).one()
         game['away']['team'] = Team.query.filter(Team.id == game['away']['playsin'].team_id).one()
-        game_day = game['home']['playsin'].game_date.strftime('%A')
+        game_day = game['date'].strftime('%A')
         game['home'] = game['home']['team']
         game['away'] = game['away']['team']
         week_schedule = add_game_to_day(game, game_day, week_schedule)
