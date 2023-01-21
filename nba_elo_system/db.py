@@ -6,6 +6,7 @@ import progressbar
 import sqlite3
 from sqlite3 import OperationalError
 from pathlib import Path
+from pytz import timezone
 import datetime
 import os
 
@@ -396,7 +397,7 @@ def initialise_db(dbpath):
     con.close()
 
 
-def get_updated_games(start_date, end_date):
+def get_updated_games(start_date, end_date, cur):
     game_table = list()
     playsin_table = list()
     start_date = str(start_date).replace('-','')
@@ -414,6 +415,11 @@ def get_updated_games(start_date, end_date):
         
         if game_status == '3':            
             game_id = int(game['id'])
+            cur.execute('''SELECT is_calculation_required FROM game WHERE id = (?)''', (game_id,))
+            status = cur.fetchone()
+
+            if status['is_calculation_required'] == 0:
+                continue
 
             game_entry = {
                 'id': game_id,
@@ -443,21 +449,24 @@ def get_updated_games(start_date, end_date):
 
 
 def update_db(dbpath):
-    print(' * Attempting To Update DB ...')
+    
     con = sqlite3.connect(dbpath)
     con.row_factory = dict_factory
     cur = con.cursor()
 
     # current date
-    end_date = datetime.datetime.today().date()
+    end_date = datetime.datetime.today()
+    end_date = end_date.replace(tzinfo=datetime.datetime.now().astimezone().tzinfo).astimezone(tz=timezone('US/Eastern')).date()
 
     # date of last game played in database
     cur.execute('''SELECT date FROM game WHERE status = 3 ORDER BY date DESC''')
     start_date = cur.fetchone()['date']
-    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d').date()
+    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
+    start_date = start_date.replace(tzinfo=datetime.datetime.now().astimezone().tzinfo).astimezone(tz=timezone('US/Eastern')).date()
 
     if end_date >= start_date:
-        game_table, playsin_table = get_updated_games(start_date, end_date)
+        print(' * Attempting To Update DB ...')
+        game_table, playsin_table = get_updated_games(start_date, end_date, cur)
         
         if not game_table:
             return
