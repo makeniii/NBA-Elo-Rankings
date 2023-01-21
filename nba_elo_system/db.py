@@ -443,6 +443,7 @@ def get_updated_games(start_date, end_date):
 
 
 def update_db(dbpath):
+    print(' * Attempting To Update DB ...')
     con = sqlite3.connect(dbpath)
     con.row_factory = dict_factory
     cur = con.cursor()

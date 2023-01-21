@@ -782,3 +782,11 @@ I have pushed the fix into main.
 In `db.py`, `update_db()` currently only updates games from the same day after 6pm. I've changed it to update even the same day games as they are completed according to the ESPN api, where the `game['status']` would have to equal `3`. Now I don't have to wait til 6pm to see the updates in elo after a game.
 
 I've pushed the changes into main.
+
+# 21/1/23
+
+I've found another bug. This time in `routes.py`, `schedule()`. Because I've changed `db.py::update_db()` to update elo's as the games for the current day are finished, the current day games on the `Schedule` page are also being affected. This is because when I got to the `Schedule` page, the win probability and projected point differential is calculated with the current Elo value. So, the win probability and projected point differential for a game before it is played to after, are different. This is an inconsistancy that I don't want in the system and so, to fix this, I've decided change the way I get the upcoming schedule. Currently, I would get the current schedule by filtering the `PlaysIn` table with getting a weeks worth of games. The dates would be a week, and would include the current day if it was before 6pm which is *usually* the time the last game would end before. Now, I've modified it to filter the `Game` table instead. This way I can do the same thing but also add the extra check for `Game.status`. As a result, I can only get games that are not completed.
+
+Another change I've made is that I've decided to run `db.py::update_db()` in both `routes.py::index()` and `routes.py::schedule()`. This way, the database can be updated without restarting the app. To do this, I had to modify `__init__.py`, `run.py`, and `routes.py`.
+
+I've pushed the changes into main.
