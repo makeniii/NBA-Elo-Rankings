@@ -4,7 +4,7 @@ from nba_elo_system import db
 class Season(db.Model):
     year = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(7), unique=True, nullable=False)
-    games = db.relationship('Game', backref='season', lazy=True)
+    games = db.relationship('Game', order_by='Game.id', backref='season', lazy=True)
 
     def __repr__(self):
         return f"Season('{self.year}', '{self.name}')"
@@ -18,7 +18,7 @@ class Game(db.Model):
     date = db.Column(db.Date, nullable=False)
     is_calculation_required = db.Column(db.Boolean, nullable=False)
 
-    plays_in = db.relationship('PlaysIn', backref='game', lazy=True)
+    plays_in = db.relationship('PlaysIn', order_by='PlaysIn.location', backref='game', lazy=True)
 
     def __repr__(self) -> str:
         return f"Game('{self.id}', '{self.season_id}', '{self.type}', '{self.status}', '{self.date}', '{self.is_calculation_required}')"
